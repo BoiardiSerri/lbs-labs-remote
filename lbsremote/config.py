@@ -1,4 +1,4 @@
-"""Piccoli file di configurazione JSON nella cartella ~/.remotelan/."""
+"""Piccoli file di configurazione JSON nella cartella ~/.lbslabs-remote/."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 
 def config_dir() -> Path:
-    path = Path.home() / ".remotelan"
+    path = Path.home() / ".lbslabs-remote"
     try:
         path.mkdir(parents=True, exist_ok=True)
     except OSError:

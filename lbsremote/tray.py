@@ -56,7 +56,7 @@ class TrayApp:
         self.server = server
         self.open_viewer = open_viewer
         self._last_client = None
-        self.icon = pystray.Icon("remotelan", make_icon_image("idle"), f"{APP_NAME} Agent",
+        self.icon = pystray.Icon("lbsremote", make_icon_image("idle"), APP_NAME,
                                  self._build_menu())
         server.on_status = self._on_status
 
@@ -131,7 +131,7 @@ class TrayApp:
         def apply():
             try:
                 self.icon.icon = make_icon_image(self._state())
-                self.icon.title = f"{APP_NAME} Agent – {self._status_text()}"
+                self.icon.title = f"{APP_NAME} – {self._status_text()}"
                 self.icon.update_menu()
             except Exception:
                 log.debug("aggiornamento icona fallito", exc_info=True)
@@ -149,12 +149,12 @@ class TrayApp:
 
     def notify(self, text: str) -> None:
         if pu.IS_MAC:
-            pu.mac_notify(f"{APP_NAME} Agent", text)
+            pu.mac_notify(APP_NAME, text)
             return
         if getattr(self.icon, "HAS_NOTIFICATION", False):
             def show():
                 try:
-                    self.icon.notify(text, f"{APP_NAME} Agent")
+                    self.icon.notify(text, APP_NAME)
                 except Exception:
                     log.debug("notifica non mostrata", exc_info=True)
             threading.Thread(target=show, daemon=True).start()

@@ -40,7 +40,7 @@ import json
 import socket
 import struct
 
-APP_ID = "remotelan"
+APP_ID = "lbslabs-remote"
 PROTOCOL_VERSION = 1
 
 DEFAULT_PORT = 5900        # TCP: sessione di controllo remoto

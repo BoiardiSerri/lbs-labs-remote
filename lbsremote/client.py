@@ -1,6 +1,6 @@
 """Viewer (client): schermata di connessione minimale + finestra che mostra lo schermo remoto.
 
-Avvio:  python remotelan_app.py (vedi app.py)
+Avvio:  python lbs_labs_remote.py (vedi app.py)
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ from .protocol import (APP_ID, DEFAULT_PORT, DISCOVERY_PORT, MSG_BYE, MSG_CONFIG
                        ProtocolError, configure_socket, decode_json, encode_json,
                        parse_host_port, recv_message, send_json, send_message)
 
-log = logging.getLogger("remotelan.client")
+log = logging.getLogger("lbsremote.client")
 
 CLIENT_CONFIG = "client.json"
 CONNECT_TIMEOUT = 4.0
@@ -149,7 +149,7 @@ class NetSession:
             msg_type, payload = recv_message(sock)
             hello = decode_json(payload) if msg_type == MSG_HELLO else {}
             if hello.get("app") != APP_ID:
-                raise ProtocolError("sulla porta indicata non risponde un agente RemoteLAN")
+                raise ProtocolError("sulla porta indicata non risponde un agente LBS Labs Remote")
             if self.remote_config:
                 send_json(sock, MSG_CONFIG, self.remote_config)
         except socket.timeout:

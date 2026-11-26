@@ -1,9 +1,9 @@
-"""Punto di ingresso unico di RemoteLAN: la stessa app gira su tutti i PC.
+"""Punto di ingresso unico di LBS Labs Remote: la stessa app gira su tutti i PC.
 
-    python remotelan_app.py              agente (icona tray/menu bar) + finestra "Connetti"
-    python remotelan_app.py 10.0.0.5     come sopra, connettendosi subito a 10.0.0.5
-    python remotelan_app.py --agent      solo agente, nessuna finestra (avvio automatico, PC demo)
-    python remotelan_app.py --viewer     solo finestra "Connetti", senza rendere controllabile il PC
+    python lbs_labs_remote.py              agente (icona tray/menu bar) + finestra "Connetti"
+    python lbs_labs_remote.py 10.0.0.5     come sopra, connettendosi subito a 10.0.0.5
+    python lbs_labs_remote.py --agent      solo agente, nessuna finestra (avvio automatico, PC demo)
+    python lbs_labs_remote.py --viewer     solo finestra "Connetti", senza rendere controllabile il PC
 
 La finestra "Connetti" (tkinter) gira in un processo figlio della stessa app:
 su macOS sia tkinter sia l'icona nella menu bar pretendono il thread principale.
@@ -20,14 +20,14 @@ from pathlib import Path
 from . import APP_NAME, autostart
 from . import platform_utils as pu
 
-log = logging.getLogger("remotelan")
+log = logging.getLogger("lbsremote")
 
-APP_SCRIPT = Path(__file__).resolve().parent.parent / "remotelan_app.py"
+APP_SCRIPT = Path(__file__).resolve().parent.parent / "lbs_labs_remote.py"
 
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(
-        prog="remotelan_app.py",
+        prog="lbs_labs_remote.py",
         description=f"{APP_NAME} – controllo remoto in LAN. La stessa app su tutti i PC: "
                     "rende controllabile questo PC (icona nella tray/menu bar) e permette "
                     "di controllarne altri.")
@@ -51,7 +51,7 @@ def parse_args(argv=None):
     g.add_argument("--no-discovery", action="store_true", help="non annunciare il PC in rete")
     g.add_argument("--no-notify", action="store_true", help="nessuna notifica alla connessione")
     g.add_argument("--no-tray", action="store_true", help="niente icona: agente in console (Ctrl+C per uscire)")
-    g.add_argument("--save", action="store_true", help="salva queste opzioni in ~/.remotelan/server.json")
+    g.add_argument("--save", action="store_true", help="salva queste opzioni in ~/.lbslabs-remote/server.json")
     p.add_argument("-v", "--verbose", action="store_true", help="log dettagliato")
     p.add_argument("--selftest", metavar="FILE", help=argparse.SUPPRESS)
     # parse_known_args: macOS può passare argomenti propri (es. -psn_0_123) alle app
@@ -114,8 +114,8 @@ def selftest(path: str) -> None:
         check("Quartz", lambda: __import__("Quartz").CGEventCreateMouseEvent)
         check("AppKit", lambda: __import__("AppKit").NSApplication)
         check("PyObjCTools.AppHelper", lambda: __import__("PyObjCTools.AppHelper"))
-    check("remotelan.client", lambda: __import__("remotelan.client"))
-    check("remotelan.tray", lambda: __import__("remotelan.tray"))
+    check("lbsremote.client", lambda: __import__("lbsremote.client"))
+    check("lbsremote.tray", lambda: __import__("lbsremote.tray"))
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(results) + "\n")
     sys.exit(1 if any(r.startswith("FAIL") for r in results) else 0)
@@ -150,8 +150,8 @@ def main(argv=None) -> None:
 
     if _mac_wrong_location():
         _show_message(APP_NAME,
-                      "Per funzionare correttamente RemoteLAN va copiata nella cartella "
-                      "Applicazioni.\n\nTrascina l'icona di RemoteLAN sulla cartella "
+                      "Per funzionare correttamente LBS Labs Remote va copiata nella cartella "
+                      "Applicazioni.\n\nTrascina l'icona di LBS Labs Remote sulla cartella "
                       "\"Applicazioni\" nella finestra del disco, poi aprila da lì.")
         return
 

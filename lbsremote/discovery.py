@@ -1,7 +1,7 @@
 """Auto-discovery in LAN tramite broadcast UDP.
 
 Il server (agente) invia ogni ~2 secondi un piccolo pacchetto JSON:
-    {"app": "remotelan", "v": 1, "name": "DEMO-PC1", "port": 5900, "busy": false}
+    {"app": "lbsremote", "v": 1, "name": "DEMO-PC1", "port": 5900, "busy": false}
 sulla porta UDP DISCOVERY_PORT. Il client resta in ascolto su quella porta e
 costruisce l'elenco dei PC trovati; l'indirizzo IP è quello del mittente.
 

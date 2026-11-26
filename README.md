@@ -1,4 +1,4 @@
-# RemoteLAN
+# LBS Labs Remote
 
 Controllo remoto minimale di computer **nella stessa rete locale**, per macOS e Windows
 in qualsiasi combinazione. È **la stessa app su tutti i PC**: ogni PC può essere controllato
@@ -13,26 +13,26 @@ e controllarne altri.
 
 Non serve installare Python: usa i pacchetti pronti.
 
-### Mac — `RemoteLAN-macOS-AppleSilicon.dmg` (chip M1/M2/M3/M4) o `RemoteLAN-macOS-Intel.dmg`
+### Mac — `LBS-Labs-Remote-macOS-AppleSilicon.dmg` (chip M1/M2/M3/M4) o `LBS-Labs-Remote-macOS-Intel.dmg`
 (Per sapere quale:  → *Informazioni su questo Mac*: "Chip Apple" oppure "Processore Intel".)
-1. Doppio clic sul file `.dmg`, poi trascina **RemoteLAN** sulla cartella **Applicazioni**.
-2. Apri **Applicazioni** e fai doppio clic su **RemoteLAN**. La prima volta il Mac dice che non
+1. Doppio clic sul file `.dmg`, poi trascina **LBS Labs Remote** sulla cartella **Applicazioni**.
+2. Apri **Applicazioni** e fai doppio clic su **LBS Labs Remote**. La prima volta il Mac dice che non
    può verificare l'app (non viene dall'App Store): clicca *Fine*, poi vai in
     → **Impostazioni di Sistema** → **Privacy e sicurezza**, scorri in basso e clicca
-   **Apri comunque** accanto a RemoteLAN. (Su macOS meno recenti: clic destro sull'app → *Apri*.)
+   **Apri comunque** accanto a LBS Labs Remote. (Su macOS meno recenti: clic destro sull'app → *Apri*.)
 3. Solo sul Mac **da controllare**: concedi *Registrazione schermo* e *Accessibilità* (vedi §5;
    l'icona nella barra dei menu ha le voci *Concedi…* che aprono la pagina giusta), poi
-   *Esci* e riapri RemoteLAN. Per l'avvio automatico: icona → **Avvia al login**.
+   *Esci* e riapri LBS Labs Remote. Per l'avvio automatico: icona → **Avvia al login**.
 
-### Windows — `RemoteLAN-Windows-Setup.exe`
+### Windows — `LBS-Labs-Remote-Windows-Setup.exe`
 1. Doppio clic sul file. Se compare *"Windows ha protetto il PC"*: **Ulteriori informazioni** →
    **Esegui comunque** (l'app non ha una firma digitale a pagamento).
-2. Avanti → Avanti. Sul PC **da controllare** spunta *"Avvia RemoteLAN automaticamente
+2. Avanti → Avanti. Sul PC **da controllare** spunta *"Avvia LBS Labs Remote automaticamente
    all'accensione"*. L'installer configura anche il firewall.
-3. RemoteLAN si trova nel menu Start. Disinstallazione: *Impostazioni → App → RemoteLAN*.
+3. LBS Labs Remote si trova nel menu Start. Disinstallazione: *Impostazioni → App → LBS Labs Remote*.
 
-Dopo l'installazione l'uso è quello descritto al §2 (al posto di `python remotelan_app.py` si
-apre l'app RemoteLAN; il PC da controllare può semplicemente restare con l'app avviata).
+Dopo l'installazione l'uso è quello descritto al §2 (al posto di `python lbs_labs_remote.py` si
+apre l'app LBS Labs Remote; il PC da controllare può semplicemente restare con l'app avviata).
 
 ### Come vengono creati i pacchetti
 Il workflow `.github/workflows/build.yml` li costruisce automaticamente su GitHub Actions
@@ -41,8 +41,8 @@ pagina *Actions* del repository, sezione *Artifacts*. In locale, sulla piattafor
 ```bash
 pip install -r requirements.txt pyinstaller
 python packaging/build_icons.py
-pyinstaller --noconfirm --clean packaging/remotelan.spec
-# macOS:   bash packaging/macos/make_dmg.sh RemoteLAN-macOS.dmg
+pyinstaller --noconfirm --clean packaging/lbs_labs_remote.spec
+# macOS:   bash packaging/macos/make_dmg.sh LBS-Labs-Remote-macOS.dmg
 # Windows: "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging\windows\installer.iss
 ```
 
@@ -50,12 +50,12 @@ pyinstaller --noconfirm --clean packaging/remotelan.spec
 
 ## 1. Installazione da sorgente (per sviluppatori)
 
-Serve **Python 3.9 o successivo**. Copia la cartella `remote-lan` sul PC e installa le dipendenze.
+Serve **Python 3.9 o successivo**. Copia la cartella `lbs-labs-remote` sul PC e installa le dipendenze.
 
 ### Windows
 1. Installa Python da <https://www.python.org/downloads/>. Durante l'installazione spunta
    **"Add python.exe to PATH"** e lascia attivo **"tcl/tk and IDLE"** (serve per la finestra).
-2. Apri il *Prompt dei comandi* nella cartella `remote-lan`:
+2. Apri il *Prompt dei comandi* nella cartella `lbs-labs-remote`:
    ```bat
    py -m pip install -r requirements.txt
    ```
@@ -65,7 +65,7 @@ Serve **Python 3.9 o successivo**. Copia la cartella `remote-lan` sul PC e insta
    ```bash
    brew install python python-tk
    ```
-2. Dal *Terminale*, nella cartella `remote-lan`:
+2. Dal *Terminale*, nella cartella `lbs-labs-remote`:
    ```bash
    python3 -m pip install -r requirements.txt
    ```
@@ -78,16 +78,16 @@ Serve **Python 3.9 o successivo**. Copia la cartella `remote-lan` sul PC e insta
 
 | Comando | Cosa fa |
 |---|---|
-| `python remotelan_app.py` | Icona nella tray/menu bar (**questo PC diventa controllabile**) + finestra **Connetti** |
-| `python remotelan_app.py 192.168.1.50` | Come sopra e si connette subito a quel PC |
-| `python remotelan_app.py --agent` | **Solo agente**, nessuna finestra: è la modalità per il PC demo |
-| `python remotelan_app.py --viewer` | **Solo finestra Connetti**: questo PC *non* diventa controllabile |
+| `python lbs_labs_remote.py` | Icona nella tray/menu bar (**questo PC diventa controllabile**) + finestra **Connetti** |
+| `python lbs_labs_remote.py 192.168.1.50` | Come sopra e si connette subito a quel PC |
+| `python lbs_labs_remote.py --agent` | **Solo agente**, nessuna finestra: è la modalità per il PC demo |
+| `python lbs_labs_remote.py --viewer` | **Solo finestra Connetti**: questo PC *non* diventa controllabile |
 
 Su Windows usa `py` al posto di `python`, oppure `pythonw` per non avere la finestra console.
 Su macOS usa `python3`.
 
 ### Sul PC da controllare (PC demo)
-Avvia `python remotelan_app.py --agent`, oppure attiva l'**avvio automatico al login** (§4).
+Avvia `python lbs_labs_remote.py --agent`, oppure attiva l'**avvio automatico al login** (§4).
 Compare un'icona nella tray (Windows) o nella menu bar (macOS) con:
 - lo stato: *in ascolto sulla porta 5900* oppure *client connesso da 192.168.1.20*;
 - gli **indirizzi IP** del PC (utili se l'auto-discovery non lo trova);
@@ -101,7 +101,7 @@ Quando qualcuno si collega o si scollega compare una notifica sul PC controllato
 Serve solo per trasparenza, non è un controllo di accesso.
 
 ### Sul PC da cui controlli
-Avvia `python remotelan_app.py` (o `--viewer` se non vuoi che anche questo PC sia controllabile).
+Avvia `python lbs_labs_remote.py` (o `--viewer` se non vuoi che anche questo PC sia controllabile).
 Compare **una sola finestra**: campo IP (precompilato con l'ultimo IP usato con successo) e
 pulsante **Connetti**. Premi **Invio** o clicca *Connetti*.
 
@@ -151,28 +151,28 @@ solo la finestra di connessione.
 ### Il modo semplice (Windows e macOS)
 Dal menu dell'icona spunta **Avvia al login**. In alternativa, da riga di comando:
 ```bash
-python remotelan_app.py --install-autostart     # attiva
-python remotelan_app.py --uninstall-autostart   # disattiva
+python lbs_labs_remote.py --install-autostart     # attiva
+python lbs_labs_remote.py --uninstall-autostart   # disattiva
 ```
 All'avvio automatico parte la modalità `--agent`: solo icona, nessuna finestra.
 
-**Windows**: viene creato il valore `RemoteLAN Agent` in
+**Windows**: viene creato il valore `LBS Labs Remote` in
 `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`. Il comando usa `pythonw.exe`,
 quindi non apre console. Lo trovi anche in *Gestione attività > App di avvio*.
 
-**macOS**: viene creato `~/Library/LaunchAgents/com.remotelan.agent.plist`. Se l'agente va in
+**macOS**: viene creato `~/Library/LaunchAgents/com.lbslabs.remote.agent.plist`. Se l'agente va in
 crash, macOS lo riavvia da solo; se esci dal menu, resta chiuso fino al prossimo login.
 Ha effetto dal login successivo. Per avviarlo subito senza riavviare la sessione:
 ```bash
-launchctl load ~/Library/LaunchAgents/com.remotelan.agent.plist
+launchctl load ~/Library/LaunchAgents/com.lbslabs.remote.agent.plist
 ```
 
-> Se sposti la cartella `remote-lan` o ricrei l'ambiente virtuale, disattiva e riattiva
+> Se sposti la cartella `lbs-labs-remote` o ricrei l'ambiente virtuale, disattiva e riattiva
 > l'avvio automatico: il percorso viene salvato al momento dell'attivazione.
 
 ### Alternativa manuale su Windows
 `Win+R` → `shell:startup` → crea un collegamento con destinazione:
-`"C:\percorso\pythonw.exe" "C:\percorso\remote-lan\remotelan_app.py" --agent`
+`"C:\percorso\pythonw.exe" "C:\percorso\lbs-labs-remote\lbs_labs_remote.py" --agent`
 
 ---
 
@@ -238,7 +238,7 @@ Note:
 ## 7. Opzioni dell'agente
 
 ```text
-python remotelan_app.py --agent [opzioni]
+python lbs_labs_remote.py --agent [opzioni]
   --port N            porta TCP (predefinita 5900)
   --discovery-port N  porta UDP degli annunci (5901)
   --fps N             fotogrammi al secondo (12)
@@ -249,7 +249,7 @@ python remotelan_app.py --agent [opzioni]
   --no-discovery      non annunciare il PC in rete
   --no-notify         nessuna notifica alla connessione
   --no-tray           niente icona, esecuzione in console (Ctrl+C per uscire)
-  --save              salva le opzioni in ~/.remotelan/server.json
+  --save              salva le opzioni in ~/.lbslabs-remote/server.json
   -v                  log dettagliato
 ```
 
@@ -261,7 +261,7 @@ l'agente abbassa la qualità JPEG e poi la risoluzione, e risale gradualmente qu
 torna libero. Se lo schermo resta fermo non invia nulla. Dopo mezzo secondo di immagine statica
 manda un fotogramma a qualità piena, così il testo torna nitido.
 
-File utili in `~/.remotelan/` (su Windows `C:\Users\<nome>\.remotelan\`):
+File utili in `~/.lbslabs-remote/` (su Windows `C:\Users\<nome>\.lbslabs-remote\`):
 `client.json` (ultimo IP e impostazioni del viewer), `server.json` (impostazioni dell'agente),
 `agent.log` e `viewer.log` (log, da guardare in caso di problemi).
 
@@ -290,8 +290,8 @@ File utili in `~/.remotelan/` (su Windows `C:\Users\<nome>\.remotelan\`):
 ## 9. Struttura del codice
 
 ```text
-remotelan_app.py        punto di ingresso unico (python remotelan_app.py --help)
-remotelan/
+lbs_labs_remote.py        punto di ingresso unico (python lbs_labs_remote.py --help)
+lbsremote/
   app.py                modalità (normale / --agent / --viewer), avvio del viewer come processo figlio
   protocol.py           protocollo TCP condiviso: framing, tipi di messaggio, eventi di input
   discovery.py          broadcast UDP: annunci (agente) e ascolto (viewer)
@@ -303,7 +303,7 @@ remotelan/
   client.py             viewer tkinter: schermata iniziale, finestra remota, focus, riconnessione
   keymap.py             conversione tasti tkinter → protocollo
   platform_utils.py     DPI su Windows, permessi e notifiche su macOS
-  config.py             file JSON in ~/.remotelan/
+  config.py             file JSON in ~/.lbslabs-remote/
 tests/test_protocol.py  test senza display: python -m unittest discover -s tests
 packaging/              PyInstaller (.spec), icone, script DMG (macOS), installer Inno Setup (Windows)
 .github/workflows/      build automatica di DMG e installer
@@ -319,4 +319,4 @@ coordinate del proprio schermo. Così funzionano con qualsiasi risoluzione o DPI
 - su Windows il processo è reso *DPI-aware*, quindi cattura e mouse usano gli stessi pixel
   fisici anche con scaling al 125–150%.
 
-Dettagli completi in `remotelan/protocol.py`.
+Dettagli completi in `lbsremote/protocol.py`.

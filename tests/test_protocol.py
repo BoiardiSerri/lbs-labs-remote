@@ -3,8 +3,8 @@ import socket
 import threading
 import unittest
 
-from remotelan import protocol as p
-from remotelan.keymap import tk_key_to_wire
+from lbsremote import protocol as p
+from lbsremote.keymap import tk_key_to_wire
 
 
 class ProtocolTest(unittest.TestCase):

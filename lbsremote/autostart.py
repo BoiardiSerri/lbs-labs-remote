@@ -2,7 +2,7 @@
 
 Windows: valore nel registro HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run
          (eseguito con pythonw.exe, quindi senza finestra console).
-macOS:   LaunchAgent ~/Library/LaunchAgents/com.remotelan.agent.plist
+macOS:   LaunchAgent ~/Library/LaunchAgents/com.lbslabs.remote.agent.plist
          (riavvia l'agente se termina in modo anomalo).
 """
 
@@ -18,8 +18,8 @@ from .config import config_dir
 log = logging.getLogger(__name__)
 
 WIN_RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
-WIN_VALUE_NAME = "RemoteLAN Agent"
-MAC_LABEL = "com.remotelan.agent"
+WIN_VALUE_NAME = "LBS Labs Remote"
+MAC_LABEL = "com.lbslabs.remote.agent"
 MAC_PLIST = Path.home() / "Library" / "LaunchAgents" / f"{MAC_LABEL}.plist"
 
 
@@ -28,7 +28,7 @@ def is_supported() -> bool:
 
 
 def _program_arguments() -> list[str]:
-    """Comando che avvia l'agente: python remotelan_app.py --agent (o l'eseguibile impacchettato)."""
+    """Comando che avvia l'agente: python lbs_labs_remote.py --agent (o l'eseguibile impacchettato)."""
     if getattr(sys, "frozen", False):
         return [sys.executable, "--agent"]
     exe = Path(sys.executable)
@@ -36,7 +36,7 @@ def _program_arguments() -> list[str]:
         pythonw = exe.with_name("pythonw.exe")
         if pythonw.exists():
             exe = pythonw
-    script = Path(__file__).resolve().parent.parent / "remotelan_app.py"
+    script = Path(__file__).resolve().parent.parent / "lbs_labs_remote.py"
     return [str(exe), str(script), "--agent"]
 
 

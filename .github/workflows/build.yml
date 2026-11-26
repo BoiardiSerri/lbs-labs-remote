@@ -26,19 +26,19 @@ jobs:
       - name: Icone
         run: python packaging/build_icons.py
       - name: PyInstaller
-        run: pyinstaller --noconfirm --clean packaging/remotelan.spec
+        run: pyinstaller --noconfirm --clean packaging/lbs_labs_remote.spec
       - name: Firma ad-hoc
-        run: codesign --force --deep --sign - dist/RemoteLAN.app
+        run: codesign --force --deep --sign - "dist/LBS Labs Remote.app"
       - name: Autotest dell'app impacchettata
         run: |
-          dist/RemoteLAN.app/Contents/MacOS/RemoteLAN --selftest selftest.txt || (cat selftest.txt; exit 1)
+          "dist/LBS Labs Remote.app/Contents/MacOS/LBSLabsRemote" --selftest selftest.txt || (cat selftest.txt; exit 1)
           cat selftest.txt
       - name: DMG
-        run: bash packaging/macos/make_dmg.sh "RemoteLAN-macOS-${{ matrix.arch }}.dmg"
+        run: bash packaging/macos/make_dmg.sh "LBS-Labs-Remote-macOS-${{ matrix.arch }}.dmg"
       - uses: actions/upload-artifact@v4
         with:
-          name: RemoteLAN-macOS-${{ matrix.arch }}
-          path: RemoteLAN-macOS-${{ matrix.arch }}.dmg
+          name: LBS-Labs-Remote-macOS-${{ matrix.arch }}
+          path: LBS-Labs-Remote-macOS-${{ matrix.arch }}.dmg
 
   windows:
     runs-on: windows-latest
@@ -52,11 +52,11 @@ jobs:
       - name: Icone
         run: python packaging/build_icons.py
       - name: PyInstaller
-        run: pyinstaller --noconfirm --clean packaging/remotelan.spec
+        run: pyinstaller --noconfirm --clean packaging/lbs_labs_remote.spec
       - name: Autotest dell'app impacchettata
         shell: pwsh
         run: |
-          $p = Start-Process -FilePath "dist\RemoteLAN\RemoteLAN.exe" -ArgumentList "--selftest","selftest.txt" -Wait -PassThru
+          $p = Start-Process -FilePath "dist\LBSLabsRemote\LBSLabsRemote.exe" -ArgumentList "--selftest","selftest.txt" -Wait -PassThru
           Get-Content selftest.txt
           if ($p.ExitCode -ne 0) { exit 1 }
       - name: Installer (Inno Setup)
@@ -64,10 +64,10 @@ jobs:
         run: |
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
-          $version = python -c "import remotelan; print(remotelan.__version__)"
+          $version = python -c "import lbsremote; print(lbsremote.__version__)"
           & $iscc "/DAppVersion=$version" packaging\windows\installer.iss
           if ($LASTEXITCODE -ne 0) { exit 1 }
       - uses: actions/upload-artifact@v4
         with:
-          name: RemoteLAN-Windows-Setup
-          path: packaging/windows/Output/RemoteLAN-Windows-Setup.exe
+          name: LBS-Labs-Remote-Windows-Setup
+          path: packaging/windows/Output/LBS-Labs-Remote-Windows-Setup.exe

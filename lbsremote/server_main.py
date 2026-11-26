@@ -11,7 +11,7 @@ from . import APP_NAME, __version__
 from .config import config_dir, load_json, save_json
 from .server import AgentServer, ServerSettings
 
-log = logging.getLogger("remotelan")
+log = logging.getLogger("lbsremote")
 
 SERVER_CONFIG = "server.json"
 
@@ -34,7 +34,7 @@ def setup_logging(verbose: bool, filename: str) -> None:
 
 
 def build_settings(args) -> ServerSettings:
-    """Impostazioni dell'agente: ~/.remotelan/server.json + opzioni da riga di comando."""
+    """Impostazioni dell'agente: ~/.lbslabs-remote/server.json + opzioni da riga di comando."""
     stored = load_json(SERVER_CONFIG, ServerSettings().to_dict())
     settings = ServerSettings.from_dict(stored)
     for attr in ("port", "discovery_port", "fps", "quality", "max_width", "monitor"):

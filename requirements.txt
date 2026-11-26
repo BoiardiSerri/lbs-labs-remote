@@ -1,4 +1,4 @@
-# RemoteLAN - dipendenze (Python 3.9+)
+# LBS Labs Remote - dipendenze (Python 3.9+)
 mss>=9.0          # cattura schermo (server)
 Pillow>=10.0      # codifica/decodifica JPEG, icona tray, visualizzazione (server + client)
 pynput>=1.7.6     # iniezione mouse/tastiera (server)

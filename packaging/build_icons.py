@@ -25,10 +25,10 @@ def app_icon(size: int = 1024) -> Image.Image:
 def main() -> None:
     OUT.mkdir(exist_ok=True)
     icon = app_icon()
-    icon.save(OUT / "RemoteLAN.png")
-    icon.save(OUT / "RemoteLAN.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64),
+    icon.save(OUT / "LBSLabsRemote.png")
+    icon.save(OUT / "LBSLabsRemote.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64),
                                             (128, 128), (256, 256)])
-    icon.save(OUT / "RemoteLAN.icns")
+    icon.save(OUT / "LBSLabsRemote.icns")
     print("icone create in", OUT)
 
 
