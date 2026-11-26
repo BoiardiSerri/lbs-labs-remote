@@ -6,3 +6,4 @@ packaging/icons/
 packaging/windows/Output/
 *.dmg
 selftest.txt
+packaging/windows/MicrosoftEdgeWebview2Setup.exe

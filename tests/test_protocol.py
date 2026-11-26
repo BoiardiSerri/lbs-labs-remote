@@ -4,7 +4,6 @@ import threading
 import unittest
 
 from lbsremote import protocol as p
-from lbsremote.keymap import tk_key_to_wire
 
 
 class ProtocolTest(unittest.TestCase):
@@ -39,20 +38,14 @@ class ProtocolTest(unittest.TestCase):
             p.parse_host_port("1.2.3.4:abc")
 
 
-class KeymapTest(unittest.TestCase):
-    def test_keys(self):
-        self.assertEqual(tk_key_to_wire("a", "a", set()), {"c": "a"})
-        self.assertEqual(tk_key_to_wire("A", "A", {"shift_l"}), {"c": "A"})
-        self.assertEqual(tk_key_to_wire("Return", "\r", set()), {"s": "enter"})
-        self.assertEqual(tk_key_to_wire("Control_L", "", set()), {"s": "ctrl_l"})
-        self.assertEqual(tk_key_to_wire("c", "\x03", {"ctrl_l"}), {"c": "c"})          # Ctrl+C
-        self.assertEqual(tk_key_to_wire("C", "\x03", {"ctrl_l", "shift_l"}), {"c": "c"})
-        self.assertEqual(tk_key_to_wire("Z", "Z", {"cmd_l", "shift_l"}), {"c": "z"})   # Cmd+Shift+Z
-        self.assertEqual(tk_key_to_wire("comma", "", {"ctrl_l"}), {"c": ","})
-        self.assertEqual(tk_key_to_wire("F5", "", set()), {"s": "f5"})
-        self.assertEqual(tk_key_to_wire("Meta_L", "", set()), {"s": "cmd_l"})
-        self.assertEqual(tk_key_to_wire("egrave", "è", set()), {"c": "è"})
-        self.assertIsNone(tk_key_to_wire("XF86Unknown", "", set()))
+class JpegSizeTest(unittest.TestCase):
+    def test_size(self):
+        import io
+        from PIL import Image
+        from lbsremote.client import _jpeg_size
+        buf = io.BytesIO()
+        Image.new("RGB", (1234, 567)).save(buf, "JPEG")
+        self.assertEqual(_jpeg_size(buf.getvalue()), (1234, 567))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,80 @@
+/* LBS Labs Remote – disposizione delle schermate.
+   Solo token di LBS-Stile-Grafico/tokens/lbs-tokens.css: nessun colore, raggio o font fuori dai token. */
+
+:root { color-scheme: dark; }
+.hidden { display: none !important; }
+
+.app { display: flex; flex-direction: column; height: 100%; }
+
+/* dimensione dell'interfaccia: 125 % sul Mac (classe impostata da app.js), 100 % su Windows */
+body.scale-125 .scalable { zoom: 1.25; }
+
+/* icone 16×16 in currentColor (icons.js) */
+.ic { display: inline-flex; width: 16px; height: 16px; flex: none; }
+.ic svg { width: 16px; height: 16px; }
+.ds-combo__arrow svg { width: 10px; height: 10px; }
+
+/* ---------------- schermata di connessione ---------------- */
+.screen-connect {
+  flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
+  padding: var(--space-3);
+  overflow: auto;
+}
+.connect-panel { width: 480px; max-width: 100%; }
+.connect-body { gap: 0; }
+.banners { display: flex; flex-direction: column; gap: var(--space-2); }
+.banners:not(:empty) { margin-bottom: var(--space-3); }
+.ds-banner .ic { color: inherit; }
+.ds-banner__text { overflow-wrap: anywhere; }
+
+.brand { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-2); }
+.field-label { display: block; margin-top: var(--space-3); margin-bottom: var(--space-1); }
+.connect-row { display: flex; gap: var(--space-2); align-items: center; }
+.host-field { flex: 1; height: 26px; font-size: var(--font-value-size); }
+.hint { margin-top: var(--space-1); }
+
+.server-list { height: 132px; overflow: hidden; }
+.server-rows { position: absolute; inset: 1px; overflow-y: auto; border-radius: inherit; }
+.server-rows:empty { display: none; }
+.ds-row { min-height: 26px; }
+.ds-row__name { flex: none; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-row__spacer { flex: 1; }
+.ds-row .ds-btn { visibility: hidden; }
+.ds-row:hover .ds-btn, .ds-row:focus-within .ds-btn { visibility: visible; }
+
+.adv-toggle { align-self: flex-start; margin-top: var(--space-3); padding-left: var(--space-1); }
+.adv-toggle.is-open .ic { transform: rotate(180deg); }
+.advanced { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-4); margin-top: var(--space-1); }
+.adv-item { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.adv-wide { grid-column: 1 / -1; }
+.port-field { width: 96px; }
+.select-wrap { position: relative; display: flex; }
+.select-wrap select { flex: 1; appearance: none; -webkit-appearance: none; padding-right: 20px; }
+.select-wrap .ds-combo__arrow { position: absolute; right: 6px; top: 7px; pointer-events: none; }
+
+/* ---------------- schermo remoto ---------------- */
+.screen-remote { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: var(--space-2); gap: var(--space-2); }
+.remote-display { flex: 1; overflow: hidden; }
+.remote-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1; }
+.remote-img:not([src]) { visibility: hidden; }
+.remote-status { position: absolute; top: var(--space-3); left: 50%; transform: translateX(-50%); z-index: 4; }
+.fs-hint { position: absolute; top: var(--space-3); left: 50%; transform: translateX(-50%); z-index: 5; }
+.docname-text { overflow: hidden; text-overflow: ellipsis; }
+
+/* schermo intero: solo l'immagine remota */
+body.is-fullscreen .ds-topbar,
+body.is-fullscreen .ds-iobar,
+body.is-fullscreen .remote-banners { display: none; }
+body.is-fullscreen .screen-remote { padding: 0; }
+body.is-fullscreen .remote-display { border: 0; border-radius: 0; background: var(--color-ink); }
+body.is-fullscreen .remote-display::before { display: none; }
+
+/* mentre si controlla il computer remoto: niente selezione né menu di contesto */
+body.mode-remote { user-select: none; }
+body.mode-remote .remote-display { cursor: default; }
+
+/* barra superiore nello schermo remoto: il nome del computer si accorcia con "…" */
+body.mode-remote .ds-topbar__left { flex: none; }
+body.mode-remote .ds-topbar__center { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+body.mode-remote .ds-topbar__right { flex: none; }
+body.mode-remote .ds-docname { min-width: 0; overflow: hidden; }

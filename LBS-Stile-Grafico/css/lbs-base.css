@@ -1,0 +1,67 @@
+/* =====================================================================================
+   LBS Labs · base dell'interfaccia (stile Moviola). Richiede ../tokens/lbs-tokens.css.
+   Colori SOLO dai token. Misure sulla griglia di 4 px.
+   ===================================================================================== */
+
+@font-face { font-family: 'LBS Barlow Semi Condensed'; font-weight: 300; src: url('../font/BarlowSemiCondensed-Light.ttf') format('truetype'); }
+@font-face { font-family: 'LBS Barlow Semi Condensed'; font-weight: 400; src: url('../font/BarlowSemiCondensed-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'LBS Barlow Semi Condensed'; font-weight: 600; src: url('../font/BarlowSemiCondensed-SemiBold.ttf') format('truetype'); }
+@font-face { font-family: 'LBS Barlow Semi Condensed'; font-weight: 700; src: url('../font/BarlowSemiCondensed-Bold.ttf') format('truetype'); }
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; }
+body {
+  background: var(--color-bg-window);
+  color: var(--color-text);
+  font-family: var(--lbs-ui-font);
+  font-size: var(--font-body-size);
+  font-weight: var(--font-body-weight);
+  line-height: 1.35;
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  cursor: default;
+}
+button, input, select, textarea { font-family: inherit; }
+img, svg { display: block; }
+
+/* ---- ruoli tipografici ---- */
+.t-caption { font-size: var(--font-caption-size); font-weight: var(--font-caption-weight); }
+.t-body { font-size: var(--font-body-size); font-weight: var(--font-body-weight); }
+.t-label { font-size: var(--font-label-size); font-weight: var(--font-label-weight); color: var(--color-text-muted); }
+.t-value { font-size: var(--font-value-size); font-weight: var(--font-value-weight); }
+.t-section { font-size: var(--font-section-size); font-weight: var(--font-section-weight); text-transform: uppercase; letter-spacing: var(--font-section-tracking); }
+.t-eyebrow { font-size: var(--font-eyebrow-size); font-weight: var(--font-eyebrow-weight); text-transform: uppercase; letter-spacing: var(--font-eyebrow-tracking); }
+.t-button { font-size: var(--font-button-size); font-weight: var(--font-button-weight); text-transform: uppercase; letter-spacing: var(--font-button-tracking); }
+.t-heading { font-size: var(--font-heading-size); font-weight: var(--font-heading-weight); text-transform: uppercase; letter-spacing: var(--font-heading-tracking); }
+.t-title { font-size: var(--font-title-size); font-weight: var(--font-title-weight); }
+.t-page { font-size: var(--font-page-size); font-weight: var(--font-page-weight); text-transform: uppercase; letter-spacing: var(--font-page-tracking); }
+.t-display { font-size: var(--font-display-size); font-weight: var(--font-display-weight); }
+.num { font-variant-numeric: tabular-nums; }
+
+.c-text { color: var(--color-text); }
+.c-text-2 { color: var(--color-text-2); }
+.c-muted { color: var(--color-text-muted); }
+.c-disabled { color: var(--color-text-disabled); }
+.c-accent { color: var(--color-accent); }
+.c-warn { color: var(--color-warn); }
+
+/* ---- scrollbar ---- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-button);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  min-height: 24px;
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--color-pill-hover-top); }
+
+/* nessuna animazione di transizione: gli stati cambiano all'istante */
+*, *::before, *::after { transition: none !important; animation: none !important; }
+
+:focus { outline: none; }
+::selection { background: var(--color-selection); color: var(--color-on-selection); }
+
+/* unità e sigle che non vanno in maiuscolo dentro i ruoli MAIUSCOLI (kHz, 1080p) */
+.keep-case { text-transform: none; }

@@ -13,28 +13,44 @@ from .server import AgentServer
 
 log = logging.getLogger(__name__)
 
-COLORS = {
-    "idle": (59, 130, 246),       # blu: in ascolto
-    "connected": (34, 197, 94),   # verde: client connesso
-    "warning": (245, 158, 11),    # arancio: permessi mancanti
-    "error": (220, 38, 38),       # rosso: porta occupata o altro errore
+# stato -> token di colore del LED (stile LBS: ok verde, accento ambra, warn arancio, error rosso)
+STATE_TOKENS = {
+    "idle": "ok",            # pronto: gli altri computer possono collegarsi
+    "connected": "accent",   # qualcuno sta controllando questo computer
+    "warning": "warn",       # permessi macOS mancanti
+    "error": "error",        # porta occupata o altro errore
 }
 
 
-def make_icon_image(state: str):
+def _logo_disc(size: int):
+    """Il marchio LBS (disco chiaro con le lettere) ritagliato dall'icona dell'app."""
     from PIL import Image, ImageDraw
-    size = 64
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    color = COLORS.get(state, COLORS["idle"]) + (255,)
-    # monitor stilizzato
-    d.rounded_rectangle((4, 8, 60, 46), radius=6, fill=color)
-    d.rectangle((10, 14, 54, 40), fill=(255, 255, 255, 235))
-    d.rectangle((28, 46, 36, 54), fill=color)
-    d.rounded_rectangle((16, 53, 48, 59), radius=3, fill=color)
-    if state == "connected":
-        d.ellipse((24, 19, 40, 35), fill=color)
-    return img
+    from .resources import STYLE_DIR
+    src = Image.open(STYLE_DIR / "logo" / "lbs-icona-app-1024.png").convert("RGBA")
+    disc = src.crop((214, 214, 810, 810))            # disco: centro 512, raggio ~298 (lbs-icona-app.svg)
+    mask = Image.new("L", disc.size, 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, disc.size[0] - 1, disc.size[1] - 1), fill=255)
+    disc.putalpha(mask)
+    return disc.resize((size, size), Image.LANCZOS)
+
+
+def make_icon_image(state: str):
+    """Icona 64×64: marchio LBS + LED di stato in basso a destra (alone al 27,5 % come i chip)."""
+    from PIL import Image, ImageDraw
+    from .resources import token_rgb
+    size, ss = 64, 4                                  # disegno a 4× poi riduzione: bordi lisci
+    big = Image.new("RGBA", (size * ss, size * ss), (0, 0, 0, 0))
+    try:
+        big.alpha_composite(_logo_disc(56 * ss), (0, 0))
+    except Exception:                                 # risorsa mancante: disco semplice
+        ImageDraw.Draw(big).ellipse((0, 0, 56 * ss, 56 * ss), fill=token_rgb("text") + (255,))
+    d = ImageDraw.Draw(big)
+    color = token_rgb(STATE_TOKENS.get(state, "ok"))
+    cx, cy = 50 * ss, 50 * ss
+    d.ellipse((cx - 14 * ss, cy - 14 * ss, cx + 14 * ss, cy + 14 * ss), fill=token_rgb("bg-0") + (255,))
+    d.ellipse((cx - 12 * ss, cy - 12 * ss, cx + 12 * ss, cy + 12 * ss), fill=color + (70,))
+    d.ellipse((cx - 8 * ss, cy - 8 * ss, cx + 8 * ss, cy + 8 * ss), fill=color + (255,))
+    return big.resize((size, size), Image.LANCZOS)
 
 
 def _on_main_thread(fn) -> None:
@@ -172,6 +188,8 @@ class TrayApp:
         def setup(icon):
             icon.visible = True
             self._refresh()
+            if pu.IS_MAC and self.open_viewer:
+                _on_main_thread(lambda: _install_mac_reopen_handler(self.open_viewer))
             if start_error:
                 self.notify(start_error)
             elif self.server.permission_problems:
@@ -179,3 +197,34 @@ class TrayApp:
 
         self.icon.icon = make_icon_image(self._state())
         self.icon.run(setup=setup)
+
+
+_reopen_handler = None
+
+
+def _install_mac_reopen_handler(callback) -> None:
+    """Mac: doppio clic sull'app (Finder, Launchpad, Dock) mentre è già attiva in background
+    = apri la finestra di connessione. macOS invia l'evento "reopen" all'app già in esecuzione."""
+    global _reopen_handler
+    try:
+        import struct
+
+        import objc  # type: ignore
+        from Foundation import NSAppleEventManager, NSObject  # type: ignore
+
+        class LBSReopenHandler(NSObject):
+            @objc.typedSelector(b"v@:@@")
+            def handleReopen_withReply_(self, event, reply):
+                try:
+                    callback()
+                except Exception:
+                    log.exception("apertura della finestra fallita")
+
+        def four_cc(code: bytes) -> int:
+            return struct.unpack(">I", code)[0]
+
+        _reopen_handler = LBSReopenHandler.alloc().init()
+        NSAppleEventManager.sharedAppleEventManager().setEventHandler_andSelector_forEventClass_andEventID_(
+            _reopen_handler, b"handleReopen:withReply:", four_cc(b"aevt"), four_cc(b"rapp"))
+    except Exception:
+        log.warning("gestione della riapertura dell'app non disponibile", exc_info=True)

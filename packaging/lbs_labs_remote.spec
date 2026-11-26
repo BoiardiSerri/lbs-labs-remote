@@ -11,16 +11,23 @@ ICONS = os.path.join(SPECPATH, "icons")
 with open(os.path.join(ROOT, "lbsremote", "__init__.py"), encoding="utf-8") as fh:
     VERSION = re.search(r'__version__ = "([^"]+)"', fh.read()).group(1)
 
-hidden = ["PIL.ImageTk", "tkinter", "tkinter.ttk", "tkinter.messagebox"]
+# interfaccia web (lbsremote/ui) + parti dello stile grafico LBS usate dall'interfaccia e dall'icona
+datas = [(os.path.join(ROOT, "lbsremote", "ui"), os.path.join("lbsremote", "ui"))]
+for part in ("tokens", "css", "font", "logo", "icone"):
+    datas.append((os.path.join(ROOT, "LBS-Stile-Grafico", part), os.path.join("LBS-Stile-Grafico", part)))
+
+hidden = ["webview"]
 if sys.platform == "darwin":
     hidden += ["pystray._darwin", "pynput.keyboard._darwin", "pynput.mouse._darwin",
-               "Quartz", "AppKit", "Foundation", "ApplicationServices", "PyObjCTools.AppHelper"]
+               "Quartz", "AppKit", "Foundation", "ApplicationServices", "PyObjCTools.AppHelper",
+               "webview.platforms.cocoa", "WebKit", "objc"]
     icon = os.path.join(ICONS, "LBSLabsRemote.icns")
 elif sys.platform.startswith("win"):
-    hidden += ["pystray._win32", "pynput.keyboard._win32", "pynput.mouse._win32"]
+    hidden += ["pystray._win32", "pynput.keyboard._win32", "pynput.mouse._win32",
+               "webview.platforms.edgechromium", "webview.platforms.winforms", "clr", "clr_loader"]
     icon = os.path.join(ICONS, "LBSLabsRemote.ico")
 else:
-    hidden += ["pystray._xorg", "pynput.keyboard._xorg", "pynput.mouse._xorg"]
+    hidden += ["pystray._xorg", "pynput.keyboard._xorg", "pynput.mouse._xorg", "webview.platforms.gtk"]
     icon = None
 if icon and not os.path.exists(icon):
     icon = None
@@ -29,8 +36,11 @@ a = Analysis(
     [os.path.join(ROOT, "lbs_labs_remote.py")],
     pathex=[ROOT],
     hiddenimports=hidden,
-    excludes=(["pystray._gtk", "pystray._appindicator", "pystray._xorg", "gi", "mss.linux"]
-              if sys.platform != "linux" else []),
+    datas=datas,
+    excludes=(["pystray._gtk", "pystray._appindicator", "pystray._xorg", "gi", "mss.linux",
+               "tkinter", "webview.platforms.gtk", "webview.platforms.qt", "PyQt5", "PyQt6",
+               "PySide2", "PySide6"]
+              if sys.platform != "linux" else ["tkinter"]),
     noarchive=False,
 )
 pyz = PYZ(a.pure)
@@ -78,6 +88,8 @@ if sys.platform == "darwin":
             "CFBundleShortVersionString": VERSION,
             "CFBundleVersion": VERSION,
             "NSHighResolutionCapable": True,
+            # la finestra carica l'interfaccia dal server locale http://127.0.0.1
+            "NSAppTransportSecurity": {"NSAllowsLocalNetworking": True, "NSAllowsArbitraryLoads": True},
             "LSMinimumSystemVersion": "11.0",
             "NSHumanReadableCopyright": "© LBS Labs",
         },

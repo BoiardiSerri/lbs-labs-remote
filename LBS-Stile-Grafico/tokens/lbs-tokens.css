@@ -1,0 +1,182 @@
+/* =====================================================================================
+   LBS Labs · Stile grafico "Graphite hardware" (lo stile di Moviola)
+   Token di design: colori, font, spaziature, raggi, ombre, gradienti.
+   Unica fonte di verità per i valori: nei programmi usa SOLO queste variabili.
+   Misure in px logici a 96 dpi (scala 100 %). Tema solo scuro.
+   ===================================================================================== */
+:root {
+  --color-bg-0: #1b1d20;
+  --color-bg-topbar-top: #1a1c1f;
+  --color-bg-topbar-bottom: #212327;
+  --color-bg-display: #1d1f22;
+  --color-bg-display-bottom: #282b30;
+  --color-bg-field: #222428;
+  --color-bg-io-bar: #222428;
+  --color-bg-window: #26282c;
+  --color-bg-panel-bottom: #2b2e33;
+  --color-bg-alt: #2b2e33;
+  --color-bg-panel: #303338;
+  --color-bg-surface: #303338;
+  --color-bg-panel-top: #3a3d43;
+  --color-bg-elevated: #2b2d31;
+  --color-edge-hi: #42454c;
+  --color-edge-lo: #16181a;
+  --color-edge-field-top: #131416;
+  --color-border: #3b3e44;
+  --color-border-field: #464950;
+  --color-border-field-hover: #a0a2a8;
+  --color-divider: #33353a;
+  --color-screw: #4c4f56;
+  --color-text: #f1f1f1;
+  --color-text-2: #c8c9cd;
+  --color-text-muted: #9a9ca3;
+  --color-text-disabled: #62646b;
+  --color-accent: #f5a800;
+  --color-accent-hover: #ffb81f;
+  --color-accent-top: #ffbd2e;
+  --color-accent-bottom: #e09a00;
+  --color-on-accent: #1f1f1f;
+  --color-selection: #f5a800;
+  --color-on-selection: #1f1f1f;
+  --color-button: #3a3d43;
+  --color-button-disabled: #2c2f33;
+  --color-pill-top: #43464d;
+  --color-pill-bottom: #33363b;
+  --color-pill-hover-top: #4d5058;
+  --color-pill-hover-bottom: #3b3e44;
+  --color-button-text: #f1f1f1;
+  --color-mute-top: #ff6b6b;
+  --color-mute-bottom: #d94444;
+  --color-knob-hi: #45484f;
+  --color-knob-lo: #1c1e21;
+  --color-knob-track: #17191b;
+  --color-slider-track: #8d9099;
+  --color-slider-thumb: #e8e8e8;
+  --color-led-off: #2c2f34;
+  --color-ink: #000000;
+  --color-ok: #5cc76e;
+  --color-warn: #ff7a45;
+  --color-error: #ff5c5c;
+  --color-busy: #9fc3e6;
+  --color-control: #a0a2a8;
+  --color-flash: #4a3c12;
+  --color-meter-yellow: #f5d000;
+  --color-mute-fill: #4a2020;
+  --color-plot-top: #1d1f22;
+  --color-plot-bottom: #282b30;
+  --color-plot-frame: #3b3e44;
+  --color-grid-major: #4e5156;
+  --color-grid-minor: #32353b;
+  --color-zero-line: #82848a;
+  --color-lane: #282a2f;
+  --color-cable: #696b70;
+  --color-cable-hot: #f1f1f1;
+  --color-info-bg: #2f363d;
+  --color-warn-bg: #3d2c27;
+  --color-meter-bg: #26292d;
+  --color-meter-tick: #26282c;
+  --color-shadow: #0d0d0f;
+  --color-selected-row: #40351d;
+  --color-mute-text: #ffffff;
+  --color-thumb-edge-left: #cfd2d8;
+  --color-thumb-edge-right: #b6b9c0;
+  --color-band-0: #3987e5;
+  --color-band-1: #d95926;
+  --color-band-2: #199e70;
+  --color-band-3: #c98500;
+  --color-band-4: #d55181;
+  --color-band-5: #2aa52a;
+  --color-band-6: #9085e9;
+  --color-band-7: #e66767;
+  --color-category-user: #5cc76e;
+  --color-category-user-preset: #9fc3e6;
+  --color-category-preset: #e8a655;
+  --color-category-hardcoded: #8a8c92;
+  --color-section-n: #129cff;
+  --color-section-c: #ff36ff;
+  --color-section-1: #1affd5;
+  --color-section-2: #ffd21f;
+  --color-section-3: #ff681c;
+  --color-section-4: #7dff4d;
+  --color-limiter-0: #8a8c92;
+  --color-limiter-1: #5cc76e;
+  --color-limiter-2: #f5d000;
+  --color-limiter-3: #ff5c5c;
+  --font-family: "Bahnschrift", "Segoe UI", "Inter", "Noto Sans", "DejaVu Sans", sans-serif;
+  --font-caption-size: 10.0px;  /* 7.5pt */
+  --font-caption-weight: 400;
+  --font-body-size: 12.0px;  /* 9.0pt */
+  --font-body-weight: 400;
+  --font-label-size: 12.0px;  /* 9.0pt */
+  --font-label-weight: 400;
+  --font-value-size: 12.67px;  /* 9.5pt */
+  --font-value-weight: 700;
+  --font-section-size: 12.67px;  /* 9.5pt */
+  --font-section-weight: 600;
+  --font-section-tracking: 0.0703em;  /* spaziatura misurata (Qt 112.0%) */
+  --font-eyebrow-size: 10.67px;  /* 8.0pt */
+  --font-eyebrow-weight: 600;
+  --font-eyebrow-tracking: 0.0949em;  /* spaziatura misurata (Qt 116.0%) */
+  --font-button-size: 11.33px;  /* 8.5pt */
+  --font-button-weight: 600;
+  --font-button-tracking: 0.0555em;  /* spaziatura misurata (Qt 110.0%) */
+  --font-heading-size: 14.67px;  /* 11.0pt */
+  --font-heading-weight: 600;
+  --font-heading-tracking: 0.0832em;  /* spaziatura misurata (Qt 114.0%) */
+  --font-title-size: 17.33px;  /* 13.0pt */
+  --font-title-weight: 700;
+  --font-page-size: 17.33px;  /* 13.0pt */
+  --font-page-weight: 600;
+  --font-page-tracking: 0.0569em;  /* spaziatura misurata (Qt 110.0%) */
+  --font-display-size: 21.33px;  /* 16.0pt */
+  --font-display-weight: 700;
+  --font-readout-size: 37.33px;  /* 28.0pt */
+  --font-readout-weight: 300;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 14px;
+  --radius-pill: 13px;
+  --radius-pill-small: 10px;
+  --radius-segment-outer: 14px;
+  --radius-segment-inner: 11px;
+  --radius-chain-tile: 8px;
+  --radius-plot: 6px;
+  --shadow-panel: 0 2px 0 rgba(0,0,0,.275), 0 1px 0 rgba(0,0,0,.353);
+  --shadow-display-inset: inset 0 8px 8px -8px rgba(0,0,0,.431);
+  --glow-accent: 0 0 0 2.5px rgba(255,189,46,.235);
+  --motion-meter-frame: 33ms;  /* passo dei vumeter */
+  --gradient-panel: linear-gradient(180deg, var(--color-bg-panel-top) 0, var(--color-bg-panel) 40px, var(--color-bg-panel-bottom) 100%);
+  --gradient-panel-qss: linear-gradient(180deg, var(--color-bg-panel-top) 0%, var(--color-bg-panel) 14%, var(--color-bg-panel-bottom) 100%);
+  --gradient-display: linear-gradient(180deg, var(--color-bg-display) 0%, var(--color-bg-display) 45%, var(--color-bg-display-bottom) 100%);
+  --gradient-pill: linear-gradient(180deg, var(--color-pill-top), var(--color-pill-bottom));
+  --gradient-pill-hover: linear-gradient(180deg, var(--color-pill-hover-top), var(--color-pill-hover-bottom));
+  --gradient-accent: linear-gradient(180deg, var(--color-accent-top), var(--color-accent-bottom));
+  --gradient-accent-hover: linear-gradient(180deg, var(--color-accent-hover), var(--color-accent));
+  --gradient-mute: linear-gradient(180deg, var(--color-mute-top), var(--color-mute-bottom));
+  --gradient-topbar: linear-gradient(180deg, var(--color-bg-topbar-top), var(--color-bg-topbar-bottom));
+  --gradient-thumb: linear-gradient(90deg, #cfd2d8 0%, var(--color-slider-thumb) 40%, #b6b9c0 100%);
+
+  /* ---------- Font dell'interfaccia (Barlow Semi Condensed incluso, uguale su Mac e Windows) ---------- */
+  --lbs-ui-font: 'LBS Barlow Semi Condensed', var(--font-family);
+
+  /* ---------- Colori di categoria dei contenuti (da Moviola: tipi di clip in timeline) ----------
+     Toni desaturati, testo --color-text sopra con contrasto >= 4.5:1. Usali per distinguere
+     tipi di oggetti (es. video/foto/audio/musica/titoli), sempre insieme a icona e nome. */
+  --lbs-cat-1-top: #3d5266;  --lbs-cat-1-bottom: #2f4152;  /* blu ardesia  (Moviola: video) */
+  --lbs-cat-2-top: #3d5c5a;  --lbs-cat-2-bottom: #2f4746;  /* verde acqua  (Moviola: foto) */
+  --lbs-cat-3-top: #3b5543;  --lbs-cat-3-bottom: #2e4335;  /* verde bosco  (Moviola: audio) */
+  --lbs-cat-4-top: #4f4562;  --lbs-cat-4-bottom: #3e364d;  /* viola        (Moviola: musica) */
+  --lbs-cat-5-top: #5c5040;  --lbs-cat-5-bottom: #483e31;  /* bronzo       (Moviola: titoli) */
+
+  /* ---------- Trasparenze ricorrenti ---------- */
+  --lbs-wave: rgba(241,241,241,.55);        /* forme d'onda sopra i colori di categoria (= text α140) */
+  --lbs-shade: rgba(0,0,0,.35);             /* oscuramento, sfondo dei dialog modali (= ink α90) */
+  --lbs-accent-range: rgba(245,168,0,.18);  /* zona selezionata su una scala (= accent α46) */
+  --lbs-accent-mark: rgba(255,184,31,.55);  /* tratti evidenziati (= accent-hover α140) */
+}

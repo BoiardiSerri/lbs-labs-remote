@@ -21,18 +21,24 @@ Non serve installare Python: usa i pacchetti pronti.
     → **Impostazioni di Sistema** → **Privacy e sicurezza**, scorri in basso e clicca
    **Apri comunque** accanto a LBS Labs Remote. (Su macOS meno recenti: clic destro sull'app → *Apri*.)
 3. Solo sul Mac **da controllare**: concedi *Registrazione schermo* e *Accessibilità* (vedi §5;
-   l'icona nella barra dei menu ha le voci *Concedi…* che aprono la pagina giusta), poi
-   *Esci* e riapri LBS Labs Remote. Per l'avvio automatico: icona → **Avvia al login**.
+   l'icona nella barra dei menu ha le voci *Grant…* che aprono la pagina giusta), poi
+   *Quit* e riapri LBS Labs Remote.
+
+Dal primo avvio l'app resta **sempre attiva in background** e riparte da sola a ogni accensione
+(avvio al login attivato automaticamente; si può disattivare dal menu dell'icona, *Start at login*).
+Doppio clic sull'app mentre è già attiva = si apre la finestra di connessione.
 
 ### Windows — `LBS-Labs-Remote-Windows-Setup.exe`
 1. Doppio clic sul file. Se compare *"Windows ha protetto il PC"*: **Ulteriori informazioni** →
    **Esegui comunque** (l'app non ha una firma digitale a pagamento).
-2. Avanti → Avanti. Sul PC **da controllare** spunta *"Avvia LBS Labs Remote automaticamente
-   all'accensione"*. L'installer configura anche il firewall.
-3. LBS Labs Remote si trova nel menu Start. Disinstallazione: *Impostazioni → App → LBS Labs Remote*.
+2. Next → Install. Alla fine LBS Labs Remote è **già attivo in background** (icona LBS vicino
+   all'orologio) e ripartirà da solo a ogni accensione. L'installer configura anche il firewall e,
+   se mancasse, installa Microsoft Edge WebView2 (il motore usato dalla finestra).
+3. Per controllare un altro PC: menu Start → **LBS Labs Remote**. Disinstallazione:
+   *Impostazioni → App → LBS Labs Remote*.
 
-Dopo l'installazione l'uso è quello descritto al §2 (al posto di `python lbs_labs_remote.py` si
-apre l'app LBS Labs Remote; il PC da controllare può semplicemente restare con l'app avviata).
+**In pratica**: installata l'app su tutti i PC, sul computer di controllo basta aprire LBS Labs
+Remote, scrivere l'indirizzo IP (o scegliere il PC dall'elenco) e premere Invio.
 
 ### Come vengono creati i pacchetti
 Il workflow `.github/workflows/build.yml` li costruisce automaticamente su GitHub Actions
@@ -63,7 +69,7 @@ Serve **Python 3.9 o successivo**. Copia la cartella `lbs-labs-remote` sul PC e 
 ### macOS
 1. Installa Python da <https://www.python.org/downloads/> (include già Tk). Se usi Homebrew:
    ```bash
-   brew install python python-tk
+   brew install python
    ```
 2. Dal *Terminale*, nella cartella `lbs-labs-remote`:
    ```bash
@@ -89,21 +95,22 @@ Su macOS usa `python3`.
 ### Sul PC da controllare (PC demo)
 Avvia `python lbs_labs_remote.py --agent`, oppure attiva l'**avvio automatico al login** (§4).
 Compare un'icona nella tray (Windows) o nella menu bar (macOS) con:
-- lo stato: *in ascolto sulla porta 5970* oppure *client connesso da 192.168.1.20*;
+- lo stato: *Ready, listening on port 5970* oppure *Controlled from 192.168.1.20*;
 - gli **indirizzi IP** del PC (utili se l'auto-discovery non lo trova);
-- **Connetti a un PC remoto…** (su Windows basta un doppio clic sull'icona);
-- **Avvia al login** (casella da spuntare);
-- **Esci**.
+- **Connect to a remote computer…** (su Windows basta un doppio clic sull'icona);
+- **Start at login** (casella);
+- **Quit**.
 
-Il colore dell'icona indica lo stato: blu = in ascolto, verde = qualcuno è collegato,
-arancio = permessi macOS mancanti, rosso = errore (es. porta occupata).
+L'icona è il marchio LBS con un LED di stato: verde = pronto, ambra = qualcuno sta controllando
+questo computer, arancio = permessi macOS mancanti, rosso = errore (es. porta occupata).
 Quando qualcuno si collega o si scollega compare una notifica sul PC controllato.
 Serve solo per trasparenza, non è un controllo di accesso.
 
 ### Sul PC da cui controlli
 Avvia `python lbs_labs_remote.py` (o `--viewer` se non vuoi che anche questo PC sia controllabile).
-Compare **una sola finestra**: campo IP (precompilato con l'ultimo IP usato con successo) e
-pulsante **Connetti**. Premi **Invio** o clicca *Connetti*.
+Compare **una sola finestra**, nello stile grafico LBS: campo IP (precompilato con l'ultimo IP
+usato con successo) e pulsante **CONNECT**. Premi **Invio** o clicca *CONNECT*. In alto a destra
+il chip *THIS COMPUTER: READY* conferma che anche questo PC è controllabile.
 
 Se nella rete ci sono PC con l'agente attivo, sotto il campo appare l'elenco **"PC trovati in
 rete"**, ad es. `DEMO-PC1 (192.168.1.50)`. Un clic sulla voce compila il campo e connette subito.
@@ -149,7 +156,8 @@ solo la finestra di connessione.
 ## 4. Avvio automatico al login
 
 ### Il modo semplice (Windows e macOS)
-Dal menu dell'icona spunta **Avvia al login**. In alternativa, da riga di comando:
+Con i pacchetti pronti è **già attivo**: su Windows lo imposta l'installer, sul Mac l'app al primo
+avvio. Si attiva/disattiva dal menu dell'icona (**Start at login**) oppure da riga di comando:
 ```bash
 python lbs_labs_remote.py --install-autostart     # attiva
 python lbs_labs_remote.py --uninstall-autostart   # disattiva
@@ -301,10 +309,15 @@ lbsremote/
   server_main.py        avvio agente: impostazioni, log, tray o console
   tray.py               icona tray/menu bar (pystray) con stato e menu
   autostart.py          avvio al login (registro di Windows / LaunchAgent di macOS)
-  client.py             viewer tkinter: schermata iniziale, finestra remota, focus, riconnessione
-  keymap.py             conversione tasti tkinter → protocollo
+  viewer.py             finestra (pywebview) + server locale che fornisce pagina e frame
+  ui/                   interfaccia web: index.html, app.css, app.js (input, focus, ESC), icons.js
+  client.py             rete del viewer: connessione, riconnessione automatica, ultimo frame
+  resources.py          percorsi di interfaccia e stile, lettura dei token di colore
   platform_utils.py     DPI su Windows, permessi e notifiche su macOS
   config.py             file JSON in ~/.lbslabs-remote/
+LBS-Stile-Grafico/       stile grafico LBS Labs (token, CSS, font Barlow, logo, icone): l'interfaccia
+                        usa direttamente questi file; vale per tutti i programmi LBS Labs
+CLAUDE.md               istruzioni per chi lavora al progetto (compreso lo stile obbligatorio)
 tests/test_protocol.py  test senza display: python -m unittest discover -s tests
 packaging/              PyInstaller (.spec), icone, script DMG (macOS), installer Inno Setup (Windows)
 .github/workflows/      build automatica di DMG e installer

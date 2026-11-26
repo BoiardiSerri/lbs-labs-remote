@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpeakerNet · Design reference</title>
+<style>
+/* SpeakerNet design tokens - generato da design-export/tools/build_tokens.py
+   Fonte di verita': speakernet/ui/theme.py (riga indicata per ogni variabile). px a 96 dpi. */
+:root {
+  --color-bg-0: #1b1d20;  /* speakernet/ui/theme.py:74 */
+  --color-bg-topbar-top: #1a1c1f;  /* speakernet/ui/theme.py:95 */
+  --color-bg-topbar-bottom: #212327;  /* speakernet/ui/theme.py:95 */
+  --color-bg-display: #1d1f22;  /* speakernet/ui/theme.py:81 */
+  --color-bg-display-bottom: #282b30;  /* speakernet/ui/theme.py:82 */
+  --color-bg-field: #222428;  /* speakernet/ui/theme.py:83 */
+  --color-bg-io-bar: #222428;  /* speakernet/ui/theme.py:96 */
+  --color-bg-window: #26282c;  /* speakernet/ui/theme.py:62 */
+  --color-bg-panel-bottom: #2b2e33;  /* speakernet/ui/theme.py:77 */
+  --color-bg-alt: #2b2e33;  /* speakernet/ui/theme.py:62 */
+  --color-bg-panel: #303338;  /* speakernet/ui/theme.py:76 */
+  --color-bg-surface: #303338;  /* speakernet/ui/theme.py:62 */
+  --color-bg-panel-top: #3a3d43;  /* speakernet/ui/theme.py:75 */
+  --color-bg-elevated: #2b2d31;  /* speakernet/ui/theme.py:138 */
+  --color-edge-hi: #42454c;  /* speakernet/ui/theme.py:78 */
+  --color-edge-lo: #16181a;  /* speakernet/ui/theme.py:79 */
+  --color-edge-field-top: #131416;  /* speakernet/ui/theme.py:84 */
+  --color-border: #3b3e44;  /* speakernet/ui/theme.py:63 */
+  --color-border-field: #464950;  /* speakernet/ui/theme.py:133 */
+  --color-border-field-hover: #a0a2a8;  /* speakernet/ui/theme.py:134 */
+  --color-divider: #33353a;  /* speakernet/ui/theme.py:140 */
+  --color-screw: #4c4f56;  /* speakernet/ui/theme.py:80 */
+  --color-text: #f1f1f1;  /* speakernet/ui/theme.py:48 */
+  --color-text-2: #c8c9cd;  /* speakernet/ui/theme.py:85 */
+  --color-text-muted: #9a9ca3;  /* speakernet/ui/theme.py:63 */
+  --color-text-disabled: #62646b;  /* speakernet/ui/theme.py:86 */
+  --color-accent: #f5a800;  /* speakernet/ui/theme.py:50 */
+  --color-accent-hover: #ffb81f;  /* speakernet/ui/theme.py:50 */
+  --color-accent-top: #ffbd2e;  /* speakernet/ui/theme.py:92 */
+  --color-accent-bottom: #e09a00;  /* speakernet/ui/theme.py:92 */
+  --color-on-accent: #1f1f1f;  /* speakernet/ui/theme.py:50 */
+  --color-selection: #f5a800;  /* speakernet/ui/theme.py:51 */
+  --color-on-selection: #1f1f1f;  /* speakernet/ui/theme.py:51 */
+  --color-button: #3a3d43;  /* speakernet/ui/theme.py:64 */
+  --color-button-disabled: #2c2f33;  /* speakernet/ui/theme.py:65 */
+  --color-pill-top: #43464d;  /* speakernet/ui/theme.py:90 */
+  --color-pill-bottom: #33363b;  /* speakernet/ui/theme.py:90 */
+  --color-pill-hover-top: #4d5058;  /* speakernet/ui/theme.py:91 */
+  --color-pill-hover-bottom: #3b3e44;  /* speakernet/ui/theme.py:91 */
+  --color-button-text: #f1f1f1;  /* speakernet/ui/theme.py:65 */
+  --color-mute-top: #ff6b6b;  /* speakernet/ui/theme.py:93 */
+  --color-mute-bottom: #d94444;  /* speakernet/ui/theme.py:93 */
+  --color-knob-hi: #45484f;  /* speakernet/ui/theme.py:87 */
+  --color-knob-lo: #1c1e21;  /* speakernet/ui/theme.py:88 */
+  --color-knob-track: #17191b;  /* speakernet/ui/theme.py:89 */
+  --color-slider-track: #8d9099;  /* speakernet/ui/theme.py:94 */
+  --color-slider-thumb: #e8e8e8;  /* speakernet/ui/theme.py:94 */
+  --color-led-off: #2c2f34;  /* speakernet/ui/theme.py:97 */
+  --color-ink: #000000;  /* speakernet/ui/theme.py:98 */
+  --color-ok: #5cc76e;  /* speakernet/ui/theme.py:56 */
+  --color-warn: #ff7a45;  /* speakernet/ui/theme.py:56 */
+  --color-error: #ff5c5c;  /* speakernet/ui/theme.py:56 */
+  --color-busy: #9fc3e6;  /* speakernet/ui/theme.py:56 */
+  --color-control: #a0a2a8;  /* speakernet/ui/theme.py:57 */
+  --color-flash: #4a3c12;  /* speakernet/ui/theme.py:57 */
+  --color-meter-yellow: #f5d000;  /* speakernet/ui/theme.py:69 */
+  --color-mute-fill: #4a2020;  /* speakernet/ui/theme.py:70 */
+  --color-plot-top: #1d1f22;  /* speakernet/ui/theme.py:142 */
+  --color-plot-bottom: #282b30;  /* speakernet/ui/theme.py:143 */
+  --color-plot-frame: #3b3e44;  /* speakernet/ui/theme.py:144 */
+  --color-grid-major: #4e5156;  /* speakernet/ui/theme.py:145 */
+  --color-grid-minor: #32353b;  /* speakernet/ui/theme.py:146 */
+  --color-zero-line: #82848a;  /* speakernet/ui/theme.py:147 */
+  --color-lane: #282a2f;  /* speakernet/ui/theme.py:149 */
+  --color-cable: #696b70;  /* speakernet/ui/theme.py:151 */
+  --color-cable-hot: #f1f1f1;  /* speakernet/ui/theme.py:152 */
+  --color-info-bg: #2f363d;  /* speakernet/ui/theme.py:154 */
+  --color-warn-bg: #3d2c27;  /* speakernet/ui/theme.py:155 */
+  --color-meter-bg: #26292d;  /* speakernet/ui/theme.py:157 */
+  --color-meter-tick: #26282c;  /* speakernet/ui/theme.py:158 */
+  --color-shadow: #0d0d0f;  /* speakernet/ui/theme.py:139 */
+  --color-selected-row: #40351d;  /* speakernet/ui/theme.py:379 */
+  --color-mute-text: #ffffff;  /* speakernet/ui/theme.py:483; speakernet/ui/hardware.py:304 */
+  --color-thumb-edge-left: #cfd2d8;  /* speakernet/ui/theme.py:380 */
+  --color-thumb-edge-right: #b6b9c0;  /* speakernet/ui/theme.py:381 */
+  --color-band-0: #3987e5;  /* speakernet/ui/plots.py:347-348 */
+  --color-band-1: #d95926;  /* speakernet/ui/plots.py:347-348 */
+  --color-band-2: #199e70;  /* speakernet/ui/plots.py:347-348 */
+  --color-band-3: #c98500;  /* speakernet/ui/plots.py:347-348 */
+  --color-band-4: #d55181;  /* speakernet/ui/plots.py:347-348 */
+  --color-band-5: #2aa52a;  /* speakernet/ui/plots.py:347-348 */
+  --color-band-6: #9085e9;  /* speakernet/ui/plots.py:347-348 */
+  --color-band-7: #e66767;  /* speakernet/ui/plots.py:347-348 */
+  --color-category-user: #5cc76e;  /* speakernet/ui/chain_view.py:78-79 */
+  --color-category-user-preset: #9fc3e6;  /* speakernet/ui/chain_view.py:78-79 */
+  --color-category-preset: #e8a655;  /* speakernet/ui/chain_view.py:78-79 */
+  --color-category-hardcoded: #8a8c92;  /* speakernet/ui/chain_view.py:78-79 */
+  --color-section-n: #129cff;  /* speakernet/ui/section_badge.py:28-29 */
+  --color-section-c: #ff36ff;  /* speakernet/ui/section_badge.py:28-29 */
+  --color-section-1: #1affd5;  /* speakernet/ui/section_badge.py:28-29 */
+  --color-section-2: #ffd21f;  /* speakernet/ui/section_badge.py:28-29 */
+  --color-section-3: #ff681c;  /* speakernet/ui/section_badge.py:28-29 */
+  --color-section-4: #7dff4d;  /* speakernet/ui/section_badge.py:28-29 */
+  --color-limiter-0: #8a8c92;  /* speakernet/ui/meters.py:32 */
+  --color-limiter-1: #5cc76e;  /* speakernet/ui/meters.py:32 */
+  --color-limiter-2: #f5d000;  /* speakernet/ui/meters.py:32 */
+  --color-limiter-3: #ff5c5c;  /* speakernet/ui/meters.py:32 */
+  --font-family: "Bahnschrift", "Segoe UI", "Inter", "Noto Sans", "DejaVu Sans", sans-serif;  /* theme.py:203 */
+  --font-caption-size: 10.0px;  /* 7.5pt, speakernet/ui/theme.py:206 */
+  --font-caption-weight: 400;
+  --font-body-size: 12.0px;  /* 9.0pt, speakernet/ui/theme.py:207 */
+  --font-body-weight: 400;
+  --font-label-size: 12.0px;  /* 9.0pt, speakernet/ui/theme.py:208 */
+  --font-label-weight: 400;
+  --font-value-size: 12.67px;  /* 9.5pt, speakernet/ui/theme.py:210 */
+  --font-value-weight: 700;
+  --font-section-size: 12.67px;  /* 9.5pt, speakernet/ui/theme.py:209 */
+  --font-section-weight: 600;
+  --font-section-tracking: 0.0703em;  /* Qt 112.0% misurato su Bahnschrift */
+  --font-eyebrow-size: 10.67px;  /* 8.0pt, speakernet/ui/theme.py:213 */
+  --font-eyebrow-weight: 600;
+  --font-eyebrow-tracking: 0.0949em;  /* Qt 116.0% misurato su Bahnschrift */
+  --font-button-size: 11.33px;  /* 8.5pt, speakernet/ui/theme.py:216 */
+  --font-button-weight: 600;
+  --font-button-tracking: 0.0555em;  /* Qt 110.0% misurato su Bahnschrift */
+  --font-heading-size: 14.67px;  /* 11.0pt, speakernet/ui/theme.py:214 */
+  --font-heading-weight: 600;
+  --font-heading-tracking: 0.0832em;  /* Qt 114.0% misurato su Bahnschrift */
+  --font-title-size: 17.33px;  /* 13.0pt, speakernet/ui/theme.py:211 */
+  --font-title-weight: 700;
+  --font-page-size: 17.33px;  /* 13.0pt, speakernet/ui/theme.py:215 */
+  --font-page-weight: 600;
+  --font-page-tracking: 0.0569em;  /* Qt 110.0% misurato su Bahnschrift */
+  --font-display-size: 21.33px;  /* 16.0pt, speakernet/ui/theme.py:212 */
+  --font-display-weight: 700;
+  --font-readout-size: 37.33px;  /* 28.0pt, speakernet/ui/theme.py:217 */
+  --font-readout-weight: 300;
+  --space-1: 4px;  /* SPACE*1, theme.py:42 */
+  --space-2: 8px;  /* SPACE*2, theme.py:42 */
+  --space-3: 12px;  /* SPACE*3, theme.py:42 */
+  --space-4: 16px;  /* SPACE*4, theme.py:42 */
+  --space-5: 20px;  /* SPACE*5, theme.py:42 */
+  --space-6: 24px;  /* SPACE*6, theme.py:42 */
+  --radius-s: 6px;  /* speakernet/ui/theme.py:43 */
+  --radius-m: 10px;  /* speakernet/ui/theme.py:43 */
+  --radius-l: 14px;  /* speakernet/ui/theme.py:43 */
+  --radius-pill: 13px;  /* speakernet/ui/theme.py:457 */
+  --radius-pill-small: 10px;  /* speakernet/ui/theme.py:487-488,510 */
+  --radius-segment-outer: 14px;  /* speakernet/ui/theme.py:502-504 */
+  --radius-segment-inner: 11px;  /* speakernet/ui/theme.py:507 */
+  --radius-chain-tile: 8px;  /* speakernet/ui/chain_view.py:75 */
+  --radius-plot: 6px;  /* speakernet/ui/plots.py:119,201 */
+  --shadow-panel: 0 2px 0 rgba(0,0,0,.275), 0 1px 0 rgba(0,0,0,.353);  /* hardware.py:85-89 (alpha 70,90/255) */
+  --shadow-display-inset: inset 0 8px 8px -8px rgba(0,0,0,.431);  /* hardware.py:187-192 [approssimazione CSS del gradiente 110->0 su 8px] */
+  --glow-accent: 0 0 0 2.5px rgba(255,189,46,.235);  /* hardware.py:311-314 alpha 60 */
+  --motion-meter-frame: 33ms;  /* meters.py:36 */
+  --gradient-panel: linear-gradient(180deg, var(--color-bg-panel-top) 0, var(--color-bg-panel) 40px, var(--color-bg-panel-bottom) 100%);  /* hardware.py:90-93 (stop=min(.5,40/h)) */
+  --gradient-panel-qss: linear-gradient(180deg, var(--color-bg-panel-top) 0%, var(--color-bg-panel) 14%, var(--color-bg-panel-bottom) 100%);  /* theme.py:371-372 (card/dialog/tab pane) */
+  --gradient-display: linear-gradient(180deg, var(--color-bg-display) 0%, var(--color-bg-display) 45%, var(--color-bg-display-bottom) 100%);  /* hardware.py:179-182 */
+  --gradient-pill: linear-gradient(180deg, var(--color-pill-top), var(--color-pill-bottom));  /* theme.py:373 */
+  --gradient-pill-hover: linear-gradient(180deg, var(--color-pill-hover-top), var(--color-pill-hover-bottom));  /* theme.py:374 */
+  --gradient-accent: linear-gradient(180deg, var(--color-accent-top), var(--color-accent-bottom));  /* theme.py:375 */
+  --gradient-accent-hover: linear-gradient(180deg, var(--color-accent-hover), var(--color-accent));  /* theme.py:376 */
+  --gradient-mute: linear-gradient(180deg, var(--color-mute-top), var(--color-mute-bottom));  /* theme.py:377 */
+  --gradient-topbar: linear-gradient(180deg, var(--color-bg-topbar-top), var(--color-bg-topbar-bottom));  /* theme.py:378 */
+  --gradient-thumb: linear-gradient(90deg, #cfd2d8 0%, var(--color-slider-thumb) 40%, #b6b9c0 100%);  /* theme.py:380-381 */
+}
+
+/* ---- pagina ------------------------------------------------------------------------- */
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--color-bg-window); color: var(--color-text); font-family: var(--font-family);
+       font-size: var(--font-body-size); line-height: 1.35; font-variant-numeric: tabular-nums; }
+.page { max-width: 1240px; margin: 0 auto; padding: 24px 16px 80px; }
+h1 { font-size: var(--font-page-size); font-weight: 600; text-transform: uppercase; letter-spacing: var(--font-page-tracking); margin: 0 0 4px; }
+h2 { font-size: var(--font-section-size); font-weight: 600; text-transform: uppercase; letter-spacing: var(--font-section-tracking);
+     color: var(--color-text-2); margin: 36px 0 12px; padding-top: 12px; }
+.src { font-family: Consolas, monospace; font-size: 11px; color: var(--color-text-muted); }
+.note { color: var(--color-text-muted); font-size: var(--font-caption-size); margin: 4px 0 0; }
+.row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+.cell { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.cell > .cap { font-size: var(--font-caption-size); color: var(--color-text-muted); text-align: center; max-width: 150px; }
+.stage { background: var(--color-bg-panel); padding: 14px; border-radius: var(--radius-l); }
+canvas { display: block; }
+
+/* ---- palette ------------------------------------------------------------------------ */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.sw { border-radius: 6px; overflow: hidden; border: 1px solid var(--color-edge-lo); background: var(--color-bg-display); }
+.sw i { display: block; height: 40px; }
+.sw b { display: block; font-weight: 600; font-size: 11px; padding: 4px 6px 0; }
+.sw span { display: block; font-family: Consolas, monospace; font-size: 10.5px; color: var(--color-text-muted); padding: 0 6px 5px; }
+
+/* ---- tipografia --------------------------------------------------------------------- */
+.type td { padding: 6px 12px 6px 0; vertical-align: baseline; border-bottom: 1px solid var(--color-border); }
+.t-caption { font-size: var(--font-caption-size); font-weight: 400; }
+.t-body { font-size: var(--font-body-size); font-weight: 400; }
+.t-value { font-size: var(--font-value-size); font-weight: 700; }
+.t-section { font-size: var(--font-section-size); font-weight: 600; text-transform: uppercase; letter-spacing: var(--font-section-tracking); }
+.t-eyebrow { font-size: var(--font-eyebrow-size); font-weight: 600; text-transform: uppercase; letter-spacing: var(--font-eyebrow-tracking); }
+.t-button { font-size: var(--font-button-size); font-weight: 600; text-transform: uppercase; letter-spacing: var(--font-button-tracking); }
+.t-heading { font-size: var(--font-heading-size); font-weight: 600; text-transform: uppercase; letter-spacing: var(--font-heading-tracking); }
+.t-title { font-size: var(--font-title-size); font-weight: 700; }
+.t-page { font-size: var(--font-page-size); font-weight: 600; text-transform: uppercase; letter-spacing: var(--font-page-tracking); }
+.t-display { font-size: var(--font-display-size); font-weight: 700; }
+.t-readout { font-size: var(--font-readout-size); font-weight: 300; }
+
+/* ---- QPushButton (theme.py:455-510) -------------------------------------------------- */
+.btn { font-family: inherit; font-size: var(--font-button-size); font-weight: 600; text-transform: uppercase;
+       letter-spacing: var(--font-button-tracking); color: var(--color-button-text); background: var(--gradient-pill);
+       border: 1px solid var(--color-edge-lo); border-top-color: var(--color-pill-hover-top); border-radius: 13px;
+       padding: 4px 14px; min-height: 26px; line-height: 16px; cursor: default; }
+.btn:hover, .btn.is-hover { background: var(--gradient-pill-hover); }
+.btn:active, .btn.is-pressed { background: var(--color-pill-bottom); border-top-color: var(--color-edge-lo); }
+.btn:focus-visible, .btn.is-focus { outline: none; border-color: var(--color-accent); }
+.btn.is-checked { background: var(--gradient-accent); color: var(--color-on-accent); border-color: var(--color-accent-bottom); border-top-color: var(--color-accent-hover); }
+.btn:disabled { background: var(--color-button-disabled); color: var(--color-text-disabled); border-color: var(--color-button-disabled); }
+.btn.primary { background: var(--gradient-accent); color: var(--color-on-accent); border-color: var(--color-accent-bottom); border-top-color: var(--color-accent-hover); }
+.btn.primary:hover, .btn.primary.is-hover { background: var(--gradient-accent-hover); }
+.btn.primary:disabled { background: var(--color-button-disabled); color: var(--color-text-disabled); border-color: var(--color-button-disabled); }
+.btn.ghost { background: transparent; color: var(--color-text-muted); border: 1px solid transparent; }
+.btn.ghost:hover, .btn.ghost.is-hover { color: var(--color-text); border-color: var(--color-border-field); }
+.btn.ghost.is-checked { color: var(--color-accent); border-color: var(--color-accent); background: transparent; }
+.btn.small, .btn.compact { padding: 2px 10px; min-height: 22px; line-height: 16px; border-radius: 10px; }
+.btn.mute { background: var(--color-bg-0); color: var(--color-text-muted); border: 1px solid var(--color-edge-lo);
+            border-radius: 11px; padding: 1px 8px; min-height: 22px; }
+.btn.mute:hover { color: var(--color-text); }
+.btn.mute.is-checked { background: var(--gradient-mute); color: var(--color-mute-text); border-color: var(--color-mute-bottom); border-top-color: var(--color-mute-top); }
+.btn.mute.is-pending { border: 1px dashed var(--color-meter-yellow); }
+/* segmentati (theme.py:498-510): con [small] ogni segmento ha raggio 10 (regola successiva) */
+.seg { display: inline-flex; }
+.seg .btn { background: var(--color-bg-0); color: var(--color-text-2); border: 3px solid var(--color-bg-0); border-radius: 0;
+            padding: 2px 14px; min-width: 48px; min-height: 28px; margin: 0; }
+.seg .btn:first-child { border-radius: 14px 0 0 14px; } .seg .btn:last-child { border-radius: 0 14px 14px 0; }
+.seg .btn:hover { color: var(--color-text); }
+.seg .btn.is-checked { background: var(--gradient-accent); color: var(--color-on-accent); border-radius: 11px; }
+.seg.small .btn { min-width: 0; padding: 2px 10px; border-radius: 10px; min-height: 26px; }
+.seg.small .btn.is-checked { border-radius: 11px; }
+
+/* ---- campi (theme.py:511-558) --------------------------------------------------------- */
+.field { font-family: inherit; font-size: var(--font-body-size); color: var(--color-text); background: var(--color-bg-field);
+         border: 1px solid var(--color-edge-lo); border-top-color: var(--color-edge-field-top); border-bottom-color: var(--color-edge-hi);
+         border-radius: 6px; padding: 2px 6px; height: 24px; width: 150px; outline: none; }
+.field:hover, .field.is-hover { border-color: var(--color-border-field-hover); }
+.field:focus, .field.is-focus { border-color: var(--color-accent); }
+.field:disabled { background: transparent; color: var(--color-text-disabled); border-color: var(--color-border); }
+.field::selection { background: var(--color-selection); color: var(--color-on-selection); }
+.combo { position: relative; padding-right: 20px; display: inline-flex; align-items: center; }
+.combo::after { content: ""; position: absolute; right: 4px; top: 6px; width: 10px; height: 10px;
+                background: center/10px no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 6l4 4 4-4' fill='none' stroke='%239a9ca3' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
+.spin { position: relative; padding-right: 18px; text-align: right; display: inline-flex; align-items: center; justify-content: flex-end; }
+.spin::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 16px; border-left: 1px solid var(--color-border);
+               background: center 3px/8px no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 10l4-4 4 4' fill='none' stroke='%239a9ca3' stroke-width='1.6' stroke-linecap='round'/></svg>"),
+               center 12px/8px no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 6l4 4 4-4' fill='none' stroke='%239a9ca3' stroke-width='1.6' stroke-linecap='round'/></svg>"); }
+/* toggle (theme.py:284-308): SVG identico a toggle_svg() */
+.toggle { display: inline-flex; align-items: center; gap: 8px; }
+/* slider (theme.py:559-572) */
+input[type=range].slider { -webkit-appearance: none; appearance: none; width: 200px; height: 18px; background: transparent; }
+input[type=range].slider::-webkit-slider-runnable-track { height: 6px; background: var(--color-slider-track); border-radius: 3px; border-top: 1px solid var(--color-text-muted); }
+input[type=range].slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 18px; margin-top: -7px; border-radius: 4px;
+                                                background: var(--gradient-thumb); border: 1px solid var(--color-edge-lo); }
+input[type=range].slider:hover::-webkit-slider-thumb { border-color: var(--color-accent-hover); }
+input[type=range].slider:focus::-webkit-slider-thumb { border-color: var(--color-accent); }
+input[type=range].slider:disabled::-webkit-slider-runnable-track { background: var(--color-button-disabled); border-top-color: var(--color-button-disabled); }
+input[type=range].slider:disabled::-webkit-slider-thumb { background: var(--color-text-disabled); }
+input[type=range].slider::-moz-range-track { height: 6px; background: var(--color-slider-track); border-radius: 3px; border-top: 1px solid var(--color-text-muted); }
+input[type=range].slider::-moz-range-thumb { width: 12px; height: 18px; border-radius: 4px; background: var(--gradient-thumb); border: 1px solid var(--color-edge-lo); }
+
+/* ---- liste, schede, menu, tooltip, banner, scrollbar ---------------------------------- */
+.tabs { display: flex; } .tab { font-size: var(--font-button-size); font-weight: 600; text-transform: uppercase; letter-spacing: var(--font-button-tracking);
+  color: var(--color-text-muted); padding: 6px 14px; border-bottom: 2px solid transparent; display: flex; gap: 8px; align-items: center; }
+.tab.sel { color: var(--color-text); border-bottom-color: var(--color-accent); } .tab:hover { color: var(--color-text); }
+.tab .x { color: var(--color-text-muted); font-weight: 400; }
+.tabpane { background: var(--gradient-panel-qss); border: 1px solid var(--color-edge-lo); border-top-color: var(--color-edge-hi); border-radius: 14px; height: 60px; margin-top: -1px; }
+table.qt { border-collapse: separate; border-spacing: 0; background: var(--color-bg-surface); border: 1px solid var(--color-edge-lo); border-radius: 10px; overflow: hidden; }
+table.qt th { background: var(--color-bg-display); color: var(--color-text-2); font-weight: 600; padding: 4px 8px; border-bottom: 1px solid var(--color-edge-lo); border-right: 1px solid var(--color-border); text-align: center; }
+table.qt td { height: 26px; padding: 0 8px; } table.qt tr:nth-child(even) td { background: var(--color-bg-alt); }
+table.qt tr.sel td { background: var(--color-selection); color: var(--color-on-selection); }
+.tree { background: var(--color-bg-display); border: 1px solid var(--color-edge-lo); border-bottom-color: var(--color-edge-hi); border-radius: 10px; padding: 6px 2px; width: 220px; }
+.tree div { min-height: 24px; display: flex; align-items: center; gap: 6px; padding: 0 8px; border-radius: 6px; }
+.tree .root { font-size: var(--font-section-size); font-weight: 600; text-transform: uppercase; letter-spacing: var(--font-section-tracking); }
+.tree .ch { padding-left: 28px; } .tree .sel { background: var(--color-selected-row); color: var(--color-accent-hover); }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.menu { background: var(--color-bg-surface); border: 1px solid var(--color-edge-lo); padding: 4px; width: 170px; }
+.menu div { padding: 4px 24px 4px 12px; border-radius: 6px; } .menu .sel { background: var(--color-selection); color: var(--color-on-selection); }
+.menu .dis { color: var(--color-text-disabled); } .menu hr { border: 0; height: 1px; background: var(--color-border); margin: 4px 8px; }
+.tooltip { background: var(--color-bg-display); color: var(--color-text); border: 1px solid var(--color-border); padding: 4px; display: inline-block; }
+.banner { border-left: 3px solid; border-radius: 6px; padding: 4px 8px; }
+.banner.info { color: var(--color-busy); background: var(--color-info-bg); } .banner.warn { color: var(--color-warn); background: var(--color-warn-bg); }
+.scroller { height: 90px; width: 220px; overflow-y: scroll; background: var(--color-bg-surface); border-radius: 10px; padding: 6px; }
+.scroller::-webkit-scrollbar { width: 10px; } .scroller::-webkit-scrollbar-track { background: transparent; }
+.scroller::-webkit-scrollbar-thumb { background: var(--color-button); border-radius: 4px; border: 2px solid transparent; background-clip: padding-box; min-height: 24px; }
+.scroller::-webkit-scrollbar-thumb:hover { background-color: var(--color-pill-hover-top); }
+.section-title { font-size: var(--font-section-size); font-weight: 600; text-transform: uppercase; letter-spacing: var(--font-section-tracking); color: var(--color-text-2); padding: 12px 0 4px; }
+.card-qss { background: var(--gradient-panel-qss); border: 1px solid var(--color-edge-lo); border-top-color: var(--color-edge-hi); border-radius: 14px; padding: 8px 22px 12px; position: relative; }
+.dialog { background: var(--gradient-panel-qss); padding: 11px 22px; width: 340px; position: relative; border: 1px solid var(--color-edge-lo); }
+.header-bar { background: var(--gradient-topbar); border-bottom: 1px solid var(--color-edge-lo); padding: 8px 12px; display: flex; align-items: center; gap: 8px; }
+.wordmark { font-size: var(--font-heading-size); font-weight: 400; text-transform: uppercase; letter-spacing: .17em; color: var(--color-text-2); }
+.menubar span { padding: 4px 8px; color: var(--color-text-2); } .menubar span u { text-decoration: underline; }
+.placenav { flex: 2; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.placenav b { font-size: 16.67px; font-weight: 600; text-transform: uppercase; letter-spacing: var(--font-heading-tracking); }
+</style>
+</head>
+<body>
+<div class="page">
+<h1>SpeakerNet · Design reference</h1>
+<p class="note">Ricostruzione dei componenti dal codice di disegno (QPainter → canvas, foglio di stile Qt → CSS). Ogni sezione cita il sorgente.
+Il confronto con i render reali è in <code>screenshots/components/</code>. Font: Bahnschrift (Windows); altrove ripiega su Segoe UI.</p>
+
+<h2>Palette</h2><div id="palette" class="swatches"></div>
+<h2>Palette funzionali (invariabili)</h2><div id="functional" class="swatches"></div>
+
+<h2>Tipografia <span class="src">theme.py:203-248</span></h2>
+<table class="type" id="type"></table>
+
+<h2>Pannelli, display, viti, rientranze <span class="src">hardware.py:47-193</span></h2>
+<div class="row">
+  <div class="cell"><canvas id="panel1" width="300" height="180"></canvas><div class="cap">paint_panel (viti)</div></div>
+  <div class="cell"><canvas id="panel2" width="300" height="180"></canvas><div class="cap">head="Parameters", notches L+R</div></div>
+  <div class="cell"><canvas id="display1" width="300" height="140"></canvas><div class="cap">paint_display (r 10)</div></div>
+  <div class="cell"><div class="card-qss" style="width:260px;height:120px" data-screws><div class="section-title" style="padding:0">Parameters</div><div class="note">QFrame[card] theme.py:407-410 + viti</div></div><div class="cap">card QSS</div></div>
+</div>
+
+<h2>Pulsanti <span class="src">theme.py:455-510 · hardware.py:287-334</span></h2>
+<div class="row stage" style="background:var(--color-bg-window)">
+  <div class="cell"><button class="btn">Open</button><div class="cap">normal</div></div>
+  <div class="cell"><button class="btn is-hover">Open</button><div class="cap">hover</div></div>
+  <div class="cell"><button class="btn is-pressed">Open</button><div class="cap">pressed</div></div>
+  <div class="cell"><button class="btn is-focus">Open</button><div class="cap">focus</div></div>
+  <div class="cell"><button class="btn is-checked">Open</button><div class="cap">checked</div></div>
+  <div class="cell"><button class="btn" disabled>Open</button><div class="cap">disabled</div></div>
+  <div class="cell"><button class="btn primary">Lock all</button><div class="cap">primary</div></div>
+  <div class="cell"><button class="btn primary is-hover">Lock all</button><div class="cap">primary hover</div></div>
+  <div class="cell"><button class="btn primary" disabled>Lock all</button><div class="cap">primary disabled</div></div>
+  <div class="cell"><button class="btn ghost">‹</button><div class="cap">ghost</div></div>
+  <div class="cell"><button class="btn ghost is-hover">‹</button><div class="cap">ghost hover</div></div>
+  <div class="cell"><button class="btn small">Reset</button><div class="cap">small/compact</div></div>
+  <div class="cell"><button class="btn mute">A Mute</button><div class="cap">mute off</div></div>
+  <div class="cell"><button class="btn mute is-checked">A MUTED</button><div class="cap">mute on</div></div>
+  <div class="cell"><button class="btn mute is-pending">A Mute</button><div class="cap">mute pending</div></div>
+</div>
+<div class="row stage" style="margin-top:12px">
+  <div class="cell"><div class="seg small"><button class="btn">±6</button><button class="btn">±12</button><button class="btn is-checked">±18</button><button class="btn">±24</button><button class="btn">Auto</button></div><div class="cap">segmentato [small] (EQ)</div></div>
+  <div class="cell"><div class="seg"><button class="btn">1Way</button><button class="btn is-checked">2Way</button><button class="btn">4Way</button></div><div class="cap">segmentato</div></div>
+  <div class="cell"><canvas id="pills" width="690" height="46"></canvas><div class="cap">paint_pill: normal · hover · primary · mute · off · off+pending · disabled</div></div>
+</div>
+
+<h2>Interruttori, campi, slider <span class="src">theme.py:284-308, 431-436, 511-572</span></h2>
+<div class="row stage">
+  <div class="cell"><label class="toggle" id="tg1"></label><div class="cap">off</div></div>
+  <div class="cell"><label class="toggle" id="tg2"></label><div class="cap">on</div></div>
+  <div class="cell"><label class="toggle" id="tg3"></label><div class="cap">off disabled</div></div>
+  <div class="cell"><label class="toggle" id="tg4"></label><div class="cap">on disabled</div></div>
+  <div class="cell"><input class="field" value="Stage-L"><div class="cap">line edit</div></div>
+  <div class="cell"><input class="field is-hover" value="Stage-L"><div class="cap">hover</div></div>
+  <div class="cell"><input class="field is-focus" value="Stage-L"><div class="cap">focus</div></div>
+  <div class="cell"><input class="field" value="Stage-L" disabled><div class="cap">disabled</div></div>
+  <div class="cell"><div class="field combo">1 – 6dB/oct</div><div class="cap">combo</div></div>
+  <div class="cell"><div class="field spin">-6.0 dB</div><div class="cap">spin (cifre tabulari)</div></div>
+  <div class="cell"><input type="range" class="slider" value="55"><div class="cap">slider</div></div>
+  <div class="cell"><input type="range" class="slider" value="55" disabled><div class="cap">slider disabled</div></div>
+</div>
+
+<h2>Knob <span class="src">hardware.py:453-702</span></h2>
+<p class="note">Interattivo: trascina in verticale (220 px = corsa intera, Shift ×10 fine), rotella (1% a scatto, Shift 0.2%), frecce ±1%, PgUp/PgDn ±10%, Home/End. Doppio clic = richiesta di scrivere il valore (nessun reset).</p>
+<div class="row stage" id="knobs"></div>
+
+<h2>Vumeter e LED <span class="src">meters.py:28-276</span></h2>
+<div class="row stage" style="background:var(--color-bg-display)">
+  <div class="cell"><canvas id="leds" width="230" height="170"></canvas><div class="cap">verticali: off · -40/-30pk · -15/-9pk · -6/-2pk · 0 · GR 6 · GR 18</div></div>
+  <div class="cell"><canvas id="bars" width="240" height="98"></canvas><div class="cap">orizzontali: -20 · -8 seg · -1 seg · GR 6</div></div>
+  <div class="cell"><canvas id="live" width="180" height="170"></canvas><div class="cap">animato (attacco immediato, rilascio 30 dB/s, picco 1.2 s poi 18 dB/s)</div>
+    <input type="range" min="-60" max="0" step="0.5" value="-18" id="liveIn" class="slider" style="width:170px"></div>
+  <div class="cell"><canvas id="lims" width="130" height="40"></canvas><div class="cap">LED limiter 0-3</div></div>
+  <div class="cell"><canvas id="chips" width="220" height="160"></canvas><div class="cap">chip ok/warn/error/busy/idle</div></div>
+</div>
+
+<h2>Liste, schede, menu, tooltip, banner, scrollbar</h2>
+<div class="row">
+  <div><div class="tabs"><div class="tab sel">User EQ · LF <span class="x">✕</span></div><div class="tab">Output limiter · LF <span class="x">✕</span></div></div><div class="tabpane" style="width:420px"></div></div>
+  <table class="qt"><tr><th></th><th>type</th><th>gain [dB]</th><th>freq [Hz]</th></tr><tr><td>1</td><td>PEQ</td><td>4.0</td><td>80</td></tr>
+    <tr class="sel"><td>2</td><td>PEQ</td><td>-3.5</td><td>320</td></tr><tr><td>3</td><td>LS</td><td>0.0</td><td>1000</td></tr></table>
+  <div class="tree"><div class="root">▾ System</div><div class="ch"><i class="dot" style="background:var(--color-ok)"></i>Stage-L</div><div class="ch sel"><i class="dot" style="background:var(--color-ok)"></i>Stage-R</div><div class="ch"><i class="dot" style="background:var(--color-warn)"></i>Delay</div></div>
+  <div class="menu"><div>Save</div><div class="sel">Save as…</div><hr><div>Load…</div><div class="dis">Export</div></div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span class="tooltip">Frequency: drag up or down (Shift: fine)</span>
+    <div class="banner info">Every change is also written to spkr/2/user_eq</div>
+    <div class="banner warn">Offline: document defaults, never read from a unit.</div>
+    <div class="scroller">A<br>B<br>C<br>D<br>E<br>F<br>G<br>H<br>I<br>J</div>
+  </div>
+</div>
+
+<h2>Grafico EQ <span class="src">plots.py:39-207, 436-1285</span></h2>
+<canvas id="eq" width="900" height="300"></canvas>
+
+<h2>Grafo della catena: tessere <span class="src">chain_view.py:690-1092</span></h2>
+<div class="row" style="background:var(--color-bg-window);padding:12px"><canvas id="tiles" width="820" height="130"></canvas></div>
+
+<h2>Scheda unità (pagina System) <span class="src">system_view.py CardDelegate</span></h2>
+<div class="row" style="background:var(--color-bg-window);padding:12px"><canvas id="cards" width="760" height="210"></canvas></div>
+
+<h2>Barra superiore e barra I/O <span class="src">main_window.py _header · hardware.py:400-446</span></h2>
+<div class="header-bar">
+  <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#ffffff"/><text x="16" y="20" text-anchor="middle" font-size="11" font-weight="700" fill="#000">RCF</text></svg>
+  <span class="wordmark">SpeakerNet</span>
+  <span class="menubar"><span><u>F</u>ile</span><span><u>S</u>ettings</span><span><u>V</u>iew</span><span><u>W</u>indow</span><span><u>H</u>elp</span></span>
+  <span class="placenav"><button class="btn ghost">‹</button><b>System · 6 units</b><button class="btn ghost">›</button></span>
+  <canvas id="topchips" width="420" height="24"></canvas>
+</div>
+<canvas id="iobar" width="1200" height="32" style="margin-top:12px;width:100%"></canvas>
+
+<h2>Dialog <span class="src">theme.py:385 · hardware.decorate</span></h2>
+<div class="dialog" data-screws>
+  <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 8px;align-items:center">
+    <span>Outputs</span><div class="field combo" style="width:100%">A | B | CD</div>
+    <span>Outputs A</span><div class="field combo" style="width:100%">1Way · DefaultPassive_TOP1W</div>
+  </div>
+  <div class="banner warn" style="margin:10px 0">Mixed output modes have not been verified on a real XPS 16K yet.</div>
+  <div style="display:flex;justify-content:flex-end;gap:6px"><button class="btn">OK</button><button class="btn">Cancel</button></div>
+</div>
+</div>
+
+<script>
+"use strict";
+const V = (n) => getComputedStyle(document.documentElement).getPropertyValue("--color-" + n).trim();
+const FONT = getComputedStyle(document.documentElement).getPropertyValue("--font-family");
+const rgba = (hex, a255) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${(a255 / 255).toFixed(3)})`; };
+const rad = (d) => d * Math.PI / 180;
+function ctxOf(id) { const c = document.getElementById(id), dpr = window.devicePixelRatio || 1, w = c.width, h = c.height;
+  c.style.width = c.style.width || w + "px"; c.style.height = h + "px"; c.width = w * dpr; c.height = h * dpr;
+  const x = c.getContext("2d"); x.scale(dpr, dpr); x.lw = w; x.lh = h; return x; }
+function rrect(x, l, t, w, h, r) { x.beginPath(); x.roundRect(l, t, w, h, r); }
+function lighter(hex, f) { /* QColor::lighter (HSV value * f/100) */ return hsv(hex, (v) => v * f / 100); }
+function darker(hex, f) { return hsv(hex, (v) => v * 100 / f); }
+function hsv(hex, fn) { let n = parseInt(hex.slice(1), 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0, s = mx ? d / mx : 0, v = mx;
+  if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360;
+  v = fn(v); if (v > 1) { s = Math.max(0, s - (v - 1)); v = 1; }
+  const c = v * s, X = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c; let [R, G, B] = h < 60 ? [c, X, 0] : h < 120 ? [X, c, 0] : h < 180 ? [0, c, X] : h < 240 ? [0, X, c] : h < 300 ? [X, 0, c] : [c, 0, X];
+  return "#" + [R, G, B].map((q) => Math.round((q + m) * 255).toString(16).padStart(2, "0")).join(""); }
+/* section_badge.text_on: nero o bianco, quello col contrasto WCAG maggiore (section_badge.py:33-49) */
+function textOn(hex) { const n = parseInt(hex.slice(1), 16), lum = (c) => { c /= 255; return c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; };
+  const L1 = .2126 * lum(n >> 16) + .7152 * lum((n >> 8) & 255) + .0722 * lum(n & 255); return (L1 + .05) / .05 >= 1.05 / (L1 + .05) ? "#000000" : "#ffffff"; }
+function wrap2(x, text, width) { /* WordWrap su due righe, poi elisione (chain_view.py:733-740) */ const words = text.split(" "), lines = [""];
+  for (const w of words) { const t = lines[lines.length - 1] ? lines[lines.length - 1] + " " + w : w; if (x.measureText(t).width <= width || !lines[lines.length - 1]) lines[lines.length - 1] = t; else lines.push(w); }
+  if (lines.length > 2) { lines.length = 2; lines[1] += "…"; } return lines; }
+function font(role, extra = "") { const s = getComputedStyle(document.documentElement);
+  return `${s.getPropertyValue("--font-" + role + "-weight")} ${s.getPropertyValue("--font-" + role + "-size")} ${FONT}`; }
+function caps(x, role) { x.letterSpacing = getComputedStyle(document.documentElement).getPropertyValue("--font-" + role + "-tracking").trim() || "0px"; }
+
+/* ---------- palette ---------- */
+const TOKENS = {"$meta": {"app": "SpeakerNet", "theme": "Graphite hardware (variante C)", "units": "px a 96 dpi (100%); pt = px*0.75", "generated_by": "design-export/tools/build_tokens.py", "source_of_truth": "speakernet/ui/theme.py"}, "color": {"bg-0": {"value": "#1b1d20", "app_token": "deep", "source": "speakernet/ui/theme.py:74", "use": "incassi: binario dei segmentati, chip, mute spento, binari meter"}, "bg-topbar-top": {"value": "#1a1c1f", "app_token": "topbar_top", "source": "speakernet/ui/theme.py:95", "use": "barra superiore, gradiente (alto) e QMenuBar"}, "bg-topbar-bottom": {"value": "#212327", "app_token": "topbar_bottom", "source": "speakernet/ui/theme.py:95", "use": "barra superiore, gradiente (basso)"}, "bg-display": {"value": "#1d1f22", "app_token": "display", "source": "speakernet/ui/theme.py:81", "use": "display incassati, grafici (alto), testate pannello, tooltip, header tabelle"}, "bg-display-bottom": {"value": "#282b30", "app_token": "display_bottom", "source": "speakernet/ui/theme.py:82", "use": "display/grafici (basso del gradiente)"}, "bg-field": {"value": "#222428", "app_token": "field", "source": "speakernet/ui/theme.py:83", "use": "campi di input"}, "bg-io-bar": {"value": "#222428", "app_token": "io_bar", "source": "speakernet/ui/theme.py:96", "use": "barra I/O in basso"}, "bg-window": {"value": "#26282c", "app_token": "window", "source": "speakernet/ui/theme.py:62", "use": "fondo finestra, rientranze dei pannelli"}, "bg-panel-bottom": {"value": "#2b2e33", "app_token": "panel_bottom", "source": "speakernet/ui/theme.py:77", "use": "pannello, fine gradiente"}, "bg-alt": {"value": "#2b2e33", "app_token": "alt", "source": "speakernet/ui/theme.py:62", "use": "righe alternate, tessere senza dati"}, "bg-panel": {"value": "#303338", "app_token": "panel", "source": "speakernet/ui/theme.py:76", "use": "pannello, corpo"}, "bg-surface": {"value": "#303338", "app_token": "surface", "source": "speakernet/ui/theme.py:62", "use": "liste/tabelle, popup combo, menu, fondo PlotWidget"}, "bg-panel-top": {"value": "#3a3d43", "app_token": "panel_top", "source": "speakernet/ui/theme.py:75", "use": "pannello, luce in alto (stop 0)"}, "bg-elevated": {"value": "#2b2d31", "app_token": "elevated", "source": "speakernet/ui/theme.py:138", "use": "hover pulsanti spin, etichette flottanti grafici"}, "edge-hi": {"value": "#42454c", "app_token": "panel_edge_hi", "source": "speakernet/ui/theme.py:78", "use": "filo chiaro in alto (pannelli) / in basso (incassi)"}, "edge-lo": {"value": "#16181a", "app_token": "panel_edge_lo", "source": "speakernet/ui/theme.py:79", "use": "bordo scuro dei pannelli e dei controlli"}, "edge-field-top": {"value": "#131416", "app_token": "field_edge", "source": "speakernet/ui/theme.py:84", "use": "bordo alto dei campi incassati"}, "border": {"value": "#3b3e44", "app_token": "border", "source": "speakernet/ui/theme.py:63", "use": "bordi neutri, griglia tabelle, separatori menu"}, "border-field": {"value": "#464950", "app_token": "field_border", "source": "speakernet/ui/theme.py:133", "use": "bordo campi in tabella (hover), popup combo"}, "border-field-hover": {"value": "#a0a2a8", "app_token": "field_hover", "source": "speakernet/ui/theme.py:134", "use": "bordo campo in hover"}, "divider": {"value": "#33353a", "app_token": "divider", "source": "speakernet/ui/theme.py:140", "use": "QFrame[divider]"}, "screw": {"value": "#4c4f56", "app_token": "screw", "source": "speakernet/ui/theme.py:80", "use": "testa delle viti (bordo del gradiente)"}, "text": {"value": "#f1f1f1", "app_token": "text", "source": "speakernet/ui/theme.py:48", "use": "testo primario (ereditato da RDNET in GRAPHITE)"}, "text-2": {"value": "#c8c9cd", "app_token": "text_2", "source": "speakernet/ui/theme.py:85", "use": "testo secondario, etichette maiuscole"}, "text-muted": {"value": "#9a9ca3", "app_token": "muted", "source": "speakernet/ui/theme.py:63", "use": "testo terziario, assi, unita', placeholder"}, "text-disabled": {"value": "#62646b", "app_token": "text_dis", "source": "speakernet/ui/theme.py:86", "use": "testo disabilitato"}, "accent": {"value": "#f5a800", "app_token": "accent", "source": "speakernet/ui/theme.py:50", "use": "ambra RDNet: selezione, focus, arco knob, primario"}, "accent-hover": {"value": "#ffb81f", "app_token": "accent_hover", "source": "speakernet/ui/theme.py:50", "use": "accento hover, tacca knob"}, "accent-top": {"value": "#ffbd2e", "app_token": "accent_top", "source": "speakernet/ui/theme.py:92", "use": "pillola primaria/checked, gradiente alto"}, "accent-bottom": {"value": "#e09a00", "app_token": "accent_bottom", "source": "speakernet/ui/theme.py:92", "use": "pillola primaria/checked, gradiente basso e bordo"}, "on-accent": {"value": "#1f1f1f", "app_token": "accent_text", "source": "speakernet/ui/theme.py:50", "use": "testo su accento"}, "selection": {"value": "#f5a800", "app_token": "selection", "source": "speakernet/ui/theme.py:51", "use": "selezione liste/menu"}, "on-selection": {"value": "#1f1f1f", "app_token": "selection_text", "source": "speakernet/ui/theme.py:51", "use": "testo su selezione"}, "button": {"value": "#3a3d43", "app_token": "button", "source": "speakernet/ui/theme.py:64", "use": "maniglie scrollbar, close-button hover"}, "button-disabled": {"value": "#2c2f33", "app_token": "button_disabled", "source": "speakernet/ui/theme.py:65", "use": "fondo controlli disabilitati, LED spento in tessera"}, "pill-top": {"value": "#43464d", "app_token": "pill_top", "source": "speakernet/ui/theme.py:90", "use": "pillola normale, gradiente alto"}, "pill-bottom": {"value": "#33363b", "app_token": "pill_bottom", "source": "speakernet/ui/theme.py:90", "use": "pillola normale, gradiente basso; pressed"}, "pill-hover-top": {"value": "#4d5058", "app_token": "pill_hover_top", "source": "speakernet/ui/theme.py:91", "use": "pillola hover alto; filo di luce; bordo alto"}, "pill-hover-bottom": {"value": "#3b3e44", "app_token": "pill_hover_bottom", "source": "speakernet/ui/theme.py:91", "use": "pillola hover basso"}, "button-text": {"value": "#f1f1f1", "app_token": "button_text", "source": "speakernet/ui/theme.py:65", "use": "testo dei pulsanti"}, "mute-top": {"value": "#ff6b6b", "app_token": "mute_top", "source": "speakernet/ui/theme.py:93", "use": "mute acceso, gradiente alto"}, "mute-bottom": {"value": "#d94444", "app_token": "mute_bottom", "source": "speakernet/ui/theme.py:93", "use": "mute acceso, gradiente basso e bordo"}, "knob-hi": {"value": "#45484f", "app_token": "knob_hi", "source": "speakernet/ui/theme.py:87", "use": "corpo knob, luce (stop 0 radiale)"}, "knob-lo": {"value": "#1c1e21", "app_token": "knob_lo", "source": "speakernet/ui/theme.py:88", "use": "corpo knob, ombra (stop 1 radiale)"}, "knob-track": {"value": "#17191b", "app_token": "knob_track", "source": "speakernet/ui/theme.py:89", "use": "binario dell'arco del knob"}, "slider-track": {"value": "#8d9099", "app_token": "slider_track", "source": "speakernet/ui/theme.py:94", "use": "binario slider; riflesso delle viti"}, "slider-thumb": {"value": "#e8e8e8", "app_token": "slider_thumb", "source": "speakernet/ui/theme.py:94", "use": "cursore slider, stop 0.4"}, "led-off": {"value": "#2c2f34", "app_token": "led_off", "source": "speakernet/ui/theme.py:97", "use": "LED spenti dei vumeter verticali"}, "ink": {"value": "#000000", "app_token": "ink", "source": "speakernet/ui/theme.py:98", "use": "nero delle ombre (sempre con alpha)"}, "ok": {"value": "#5cc76e", "app_token": "ok", "source": "speakernet/ui/theme.py:56", "use": "stato ok, LED attivo, verde vumeter"}, "warn": {"value": "#ff7a45", "app_token": "warn", "source": "speakernet/ui/theme.py:56", "use": "stato warning"}, "error": {"value": "#ff5c5c", "app_token": "error", "source": "speakernet/ui/theme.py:56", "use": "errore, rosso vumeter, GR"}, "busy": {"value": "#9fc3e6", "app_token": "busy", "source": "speakernet/ui/theme.py:56", "use": "stato in corso / info"}, "control": {"value": "#a0a2a8", "app_token": "control", "source": "speakernet/ui/theme.py:57", "use": "bordi controlli Fusion, SumItem, LinkToggle"}, "flash": {"value": "#4a3c12", "app_token": "flash", "source": "speakernet/ui/theme.py:57", "use": "token presente, uso non trovato nei moduli ui [vedi Lacune]"}, "meter-yellow": {"value": "#f5d000", "app_token": "meter_yellow", "source": "speakernet/ui/theme.py:69", "use": "giallo vumeter; bordo 'pending'"}, "mute-fill": {"value": "#4a2020", "app_token": "mute_fill", "source": "speakernet/ui/theme.py:70", "use": "fondo tessera catena in mute"}, "plot-top": {"value": "#1d1f22", "app_token": "plot_top", "source": "speakernet/ui/theme.py:142", "use": "grafico, gradiente alto"}, "plot-bottom": {"value": "#282b30", "app_token": "plot_bottom", "source": "speakernet/ui/theme.py:143", "use": "grafico, gradiente basso; contorno nodi"}, "plot-frame": {"value": "#3b3e44", "app_token": "plot_frame", "source": "speakernet/ui/theme.py:144", "use": "cornice grafico"}, "grid-major": {"value": "#4e5156", "app_token": "grid_major", "source": "speakernet/ui/theme.py:145", "use": "griglia principale; tacche scala meter"}, "grid-minor": {"value": "#32353b", "app_token": "grid_minor", "source": "speakernet/ui/theme.py:146", "use": "griglia secondaria"}, "zero-line": {"value": "#82848a", "app_token": "zero_line", "source": "speakernet/ui/theme.py:147", "use": "linea 0 dB (1.2 px)"}, "lane": {"value": "#282a2f", "app_token": "lane", "source": "speakernet/ui/theme.py:149", "use": "corsia catena (non piu' usato: corsie = display)"}, "cable": {"value": "#696b70", "app_token": "cable", "source": "speakernet/ui/theme.py:151", "use": "cavi della catena"}, "cable-hot": {"value": "#f1f1f1", "app_token": "cable_hot", "source": "speakernet/ui/theme.py:152", "use": "cavo evidenziato"}, "info-bg": {"value": "#2f363d", "app_token": "info_bg", "source": "speakernet/ui/theme.py:154", "use": "banner info"}, "warn-bg": {"value": "#3d2c27", "app_token": "warn_bg", "source": "speakernet/ui/theme.py:155", "use": "banner warning"}, "meter-bg": {"value": "#26292d", "app_token": "meter_bg", "source": "speakernet/ui/theme.py:157", "use": "separatori segmenti barre orizzontali"}, "meter-tick": {"value": "#26282c", "app_token": "meter_tick", "source": "speakernet/ui/theme.py:158", "use": "tacche -12/-3 dB barre orizzontali"}, "shadow": {"value": "#0d0d0f", "app_token": "shadow", "source": "speakernet/ui/theme.py:139", "use": "ombre tessere catena (alpha 60/80)"}, "selected-row": {"value": "#40351d", "app_token": "fills.selected_row", "source": "speakernet/ui/theme.py:379", "use": "riga scelta barra laterale: mix(accent, display, 0.84)"}, "mute-text": {"value": "#ffffff", "app_token": "literal", "source": "speakernet/ui/theme.py:483; speakernet/ui/hardware.py:304", "use": "testo del mute acceso"}, "thumb-edge-left": {"value": "#cfd2d8", "app_token": "literal", "source": "speakernet/ui/theme.py:380", "use": "cursore slider stop 0"}, "thumb-edge-right": {"value": "#b6b9c0", "app_token": "literal", "source": "speakernet/ui/theme.py:381", "use": "cursore slider stop 1"}}, "color_functional": {"band": {"values": {"0": "#3987e5", "1": "#d95926", "2": "#199e70", "3": "#c98500", "4": "#d55181", "5": "#2aa52a", "6": "#9085e9", "7": "#e66767"}, "source": "speakernet/ui/plots.py:347-348"}, "category": {"values": {"user": "#5cc76e", "user_preset": "#9fc3e6", "preset": "#e8a655", "hardcoded": "#8a8c92"}, "source": "speakernet/ui/chain_view.py:78-79"}, "section": {"values": {"N": "#129cff", "C": "#ff36ff", "1": "#1affd5", "2": "#ffd21f", "3": "#ff681c", "4": "#7dff4d"}, "source": "speakernet/ui/section_badge.py:28-29"}, "limiter": {"values": {"0": "#8a8c92", "1": "#5cc76e", "2": "#f5d000", "3": "#ff5c5c"}, "source": "speakernet/ui/meters.py:32"}}, "font": {"family": {"value": "Bahnschrift", "fallbacks": ["Segoe UI", "Inter", "Noto Sans", "DejaVu Sans"], "source": "speakernet/ui/theme.py:203", "note": "font di sistema Windows (licenza Microsoft): non ridistribuibile"}, "base_size_pt": {"value": 9.0, "source": "QApplication.font() su Windows (Segoe UI 9 pt) [ricavato a runtime]"}, "tabular_figures": {"value": "tnum", "source": "speakernet/ui/theme.py:225-231"}, "roles": {"caption": {"family": "Bahnschrift", "size_pt": 7.5, "size_px_96dpi": 10.0, "weight": 400, "uppercase": false, "qt_letter_spacing_percent": 100.0, "source": "speakernet/ui/theme.py:206"}, "body": {"family": "Bahnschrift", "size_pt": 9.0, "size_px_96dpi": 12.0, "weight": 400, "uppercase": false, "qt_letter_spacing_percent": 100.0, "source": "speakernet/ui/theme.py:207"}, "label": {"family": "Bahnschrift", "size_pt": 9.0, "size_px_96dpi": 12.0, "weight": 400, "uppercase": false, "qt_letter_spacing_percent": 100.0, "source": "speakernet/ui/theme.py:208"}, "value": {"family": "Bahnschrift", "size_pt": 9.5, "size_px_96dpi": 12.67, "weight": 700, "uppercase": false, "qt_letter_spacing_percent": 100.0, "source": "speakernet/ui/theme.py:210"}, "section": {"family": "Bahnschrift", "size_pt": 9.5, "size_px_96dpi": 12.67, "weight": 600, "uppercase": true, "qt_letter_spacing_percent": 112.0, "source": "speakernet/ui/theme.py:209", "letter_spacing_em_measured": 0.0703}, "eyebrow": {"family": "Bahnschrift", "size_pt": 8.0, "size_px_96dpi": 10.67, "weight": 600, "uppercase": true, "qt_letter_spacing_percent": 116.0, "source": "speakernet/ui/theme.py:213", "letter_spacing_em_measured": 0.0949}, "button": {"family": "Bahnschrift", "size_pt": 8.5, "size_px_96dpi": 11.33, "weight": 600, "uppercase": true, "qt_letter_spacing_percent": 110.0, "source": "speakernet/ui/theme.py:216", "letter_spacing_em_measured": 0.0555}, "heading": {"family": "Bahnschrift", "size_pt": 11.0, "size_px_96dpi": 14.67, "weight": 600, "uppercase": true, "qt_letter_spacing_percent": 114.0, "source": "speakernet/ui/theme.py:214", "letter_spacing_em_measured": 0.0832}, "title": {"family": "Bahnschrift", "size_pt": 13.0, "size_px_96dpi": 17.33, "weight": 700, "uppercase": false, "qt_letter_spacing_percent": 100.0, "source": "speakernet/ui/theme.py:211"}, "page": {"family": "Bahnschrift", "size_pt": 13.0, "size_px_96dpi": 17.33, "weight": 600, "uppercase": true, "qt_letter_spacing_percent": 110.0, "source": "speakernet/ui/theme.py:215", "letter_spacing_em_measured": 0.0569}, "display": {"family": "Bahnschrift", "size_pt": 16.0, "size_px_96dpi": 21.33, "weight": 700, "uppercase": false, "qt_letter_spacing_percent": 100.0, "source": "speakernet/ui/theme.py:212"}, "readout": {"family": "Bahnschrift", "size_pt": 28.0, "size_px_96dpi": 37.33, "weight": 300, "uppercase": false, "qt_letter_spacing_percent": 100.0, "source": "speakernet/ui/theme.py:217"}}, "role_rules": {"bold_caps_weight": "DemiBold 600 (theme.py:241-242)", "light_roles": "readout -> Light 300 (theme.py:243-244)", "min_size_pt": "6.0 (theme.py:239)"}}, "space": {"unit": {"value": 4, "source": "speakernet/ui/theme.py:42"}, "scale": [4, 8, 12, 16, 20, 24]}, "radius": {"s": {"value": 6, "source": "speakernet/ui/theme.py:43", "use": "campi, banner, menu item"}, "m": {"value": 10, "source": "speakernet/ui/theme.py:43", "use": "display, tabelle, liste, sidebar"}, "l": {"value": 14, "source": "speakernet/ui/theme.py:43", "use": "pannelli, card, tab pane"}, "pill": {"value": 13, "source": "speakernet/ui/theme.py:457", "use": "QPushButton (alto 26 px)"}, "pill-small": {"value": 10, "source": "speakernet/ui/theme.py:487-488,510", "use": "compact/small"}, "segment-outer": {"value": 14, "source": "speakernet/ui/theme.py:502-504"}, "segment-inner": {"value": 11, "source": "speakernet/ui/theme.py:507"}, "chip": {"value": "h/2", "source": "speakernet/ui/hardware.py:345"}, "chain-tile": {"value": 8, "source": "speakernet/ui/chain_view.py:75"}, "plot": {"value": 6, "source": "speakernet/ui/plots.py:119,201"}}, "stroke": {"hairline": 1, "zero_line": 1.2, "tile_border": 1.6, "tile_selected": 2.4, "tab_indicator": 2, "banner_left": 3, "source": "vedi DESIGN_SYSTEM.md per le righe"}, "shadow": {"panel": {"value": "2 strati ink: dy +2 alpha 70/255, dy +1 alpha 90/255, stessa forma, nessun blur", "source": "speakernet/ui/hardware.py:85-89"}, "display_inner": {"value": "gradiente interno ink alpha 110->0 sugli 8 px alti", "source": "speakernet/ui/hardware.py:187-192"}, "screw": {"value": "ink alpha 90, dy +0.6, r+0.6", "source": "speakernet/ui/hardware.py:139-140"}, "knob_body": {"value": "ink alpha 120, dy +2, +1 px per lato", "source": "speakernet/ui/hardware.py:658-659"}, "chain_tile": {"value": "shadow alpha 60 dy 3; alpha 80 dy 1.5", "source": "speakernet/ui/chain_view.py:748-752"}}, "glow": {"pill_primary_mute": {"value": "colore top alpha 60, rettangolo +2.5 px per lato", "source": "speakernet/ui/hardware.py:311-314"}, "knob_arc": {"value": "accent alpha 70 (120 in drag), spessore ring*2.4", "source": "speakernet/ui/hardware.py:649-653"}, "led": {"value": "colore alpha 70, raggio d*0.95 (vumeter); alpha 60 r+2 (paint_led)", "source": "speakernet/ui/meters.py:155; meters.py:271-272"}, "chip_led": {"value": "colore alpha 70, r 6 (LED r 3.5)", "source": "speakernet/ui/hardware.py:347-350"}, "selected_tile": {"value": "accent alpha 45 w8 + alpha 90 w4.5", "source": "speakernet/ui/chain_view.py:753-757"}}, "motion": {"meter_frame_ms": {"value": 33, "source": "speakernet/ui/meters.py:36"}, "meter_release_db_s": {"value": 30.0, "source": "speakernet/ui/meters.py:37"}, "meter_peak_hold_s": {"value": 1.2, "source": "speakernet/ui/meters.py:38"}, "meter_peak_decay_db_s": {"value": 18.0, "source": "speakernet/ui/meters.py:39"}, "meter_attack": {"value": "immediato", "source": "speakernet/ui/meters.py:86"}, "transitions": {"value": "nessuna: hover/press/focus cambiano stato istantaneamente", "source": "nessuna QPropertyAnimation nel codice"}}, "component": {"knob": {"start_deg_qt": 225.0, "sweep_deg": 270.0, "drag_px_full_range": 220.0, "ring_px": "max(3, dial*0.055)", "sizes_px": [64, 52, 40, 30], "source": "speakernet/ui/hardware.py:453-454,635"}, "screw": {"inset": 10.0, "radius": 2.4, "source": "speakernet/ui/hardware.py:29-30"}, "panel_head_h": {"value": 38, "source": "speakernet/ui/hardware.py:31"}, "notch_w": {"value": 10.0, "source": "speakernet/ui/hardware.py:32"}, "io_bar_h": {"value": 32, "source": "speakernet/ui/hardware.py:428"}, "status_chip_h": {"value": 24, "source": "speakernet/ui/hardware.py:364"}, "toggle": {"w": 30, "h": 16, "source": "speakernet/ui/theme.py:284"}, "led_meter": {"d": 4.0, "gap": 3.0, "source": "speakernet/ui/meters.py:116-117"}, "meter_scale": {"low_db": -60.0, "yellow_db": -12.0, "red_db": -3.0, "gr_max_db": 24.0, "source": "speakernet/ui/meters.py:28-31"}, "row_height": {"value": 26, "source": "speakernet/ui/theme.py:40"}}};
+for (const [name, e] of Object.entries(TOKENS.color)) {
+  document.getElementById("palette").insertAdjacentHTML("beforeend",
+    `<div class="sw"><i style="background:${e.value}"></i><b>--color-${name}</b><span>${e.value} · ${e.app_token}<br>${e.source.replace("speakernet/ui/", "")}</span></div>`); }
+for (const [group, g] of Object.entries(TOKENS.color_functional)) for (const [k, v] of Object.entries(g.values))
+  document.getElementById("functional").insertAdjacentHTML("beforeend", `<div class="sw"><i style="background:${v}"></i><b>${group} ${k}</b><span>${v} · ${g.source.replace("speakernet/ui/", "")}</span></div>`);
+for (const [role, r] of Object.entries(TOKENS.font.roles))
+  document.getElementById("type").insertAdjacentHTML("beforeend",
+    `<tr><td class="src">${role}</td><td class="t-${role}">Stage-L · 2.50 kHz · -6.0 dB</td><td class="src">${r.size_pt} pt = ${r.size_px_96dpi} px · ${r.weight}${r.uppercase ? " · MAIUSC · Qt " + r.qt_letter_spacing_percent + "%" : ""} · ${r.source.replace("speakernet/ui/", "")}</td></tr>`);
+
+/* ---------- hardware.py: pannello, viti, rientranze, display ---------- */
+function paintScrews(x, l, t, w, h) { const I = 10, R = 2.4;
+  for (const cx of [l + I, l + w - I]) for (const cy of [t + I, t + h - I]) {
+    x.fillStyle = rgba(V("ink"), 90); x.beginPath(); x.arc(cx, cy + 0.6, R + 0.6, 0, 7); x.fill();
+    const g = x.createRadialGradient(cx - 0.8, cy - 0.8, 0, cx - 0.8, cy - 0.8, R * 1.6); g.addColorStop(0, V("slider-track")); g.addColorStop(1, V("screw"));
+    x.fillStyle = g; x.beginPath(); x.arc(cx, cy, R, 0, 7); x.fill(); } }
+function paintNotch(x, l, t, w, h, side) { const top = t + h * 0.34, hh = h * 0.32, s = hh * 0.14, N = 10;
+  const x0 = side === "left" ? l - 0.5 : l + w + 0.5, x1 = side === "left" ? l + N : l + w - N;
+  x.beginPath(); x.moveTo(x0, top); x.lineTo(x1, top + s); x.lineTo(x1, top + hh - s); x.lineTo(x0, top + hh); x.closePath();
+  x.fillStyle = V("bg-window"); x.fill(); x.strokeStyle = V("edge-lo"); x.lineWidth = 1; x.stroke(); }
+function paintPanel(x, L, T, W, H, o = {}) { const r = o.radius ?? 14, shadow = o.shadow ?? true;
+  const l = L + 0.5, t = T + 0.5, w = W - 1, h = H - (shadow ? 3 : 1);
+  if (shadow) for (const [dy, a] of [[2, 70], [1, 90]]) { x.fillStyle = rgba(V("ink"), a); rrect(x, l, t + dy, w, h, r); x.fill(); }
+  const g = x.createLinearGradient(0, t, 0, t + h); g.addColorStop(0, V("bg-panel-top")); g.addColorStop(Math.min(0.5, 40 / Math.max(1, h)), V("bg-panel")); g.addColorStop(1, V("bg-panel-bottom"));
+  x.fillStyle = g; rrect(x, l, t, w, h, r); x.fill(); x.strokeStyle = V("edge-lo"); x.lineWidth = 1; x.stroke();
+  x.strokeStyle = V("edge-hi"); x.beginPath(); x.arc(l + 1 + r, t + 1 + r, r, Math.PI, 1.5 * Math.PI); x.lineTo(l + w - r - 1, t + 1); x.arc(l + w - 1 - r, t + 1 + r, r, 1.5 * Math.PI, 2 * Math.PI); x.stroke();
+  if (o.head) { x.save(); rrect(x, l, t, w, h, r); x.clip(); x.fillStyle = V("bg-display"); x.fillRect(l, t, w, 38); x.restore();
+    x.strokeStyle = V("edge-lo"); x.beginPath(); x.moveTo(l, t + 38); x.lineTo(l + w, t + 38); x.stroke();
+    x.fillStyle = V("text"); x.font = font("heading"); caps(x, "heading"); x.textBaseline = "middle"; x.fillText(o.head.toUpperCase(), l + 24, t + 19); x.letterSpacing = "0px"; }
+  for (const s of o.notches || []) paintNotch(x, l, t, w, h, s);
+  if (o.screws ?? true) paintScrews(x, l, t, w, h); }
+function paintDisplay(x, L, T, W, H, r = 10) { const l = L + 0.5, t = T + 0.5, w = W - 1, h = H - 1;
+  const g = x.createLinearGradient(0, t, 0, t + h); g.addColorStop(0, V("bg-display")); g.addColorStop(0.45, V("bg-display")); g.addColorStop(1, V("bg-display-bottom"));
+  x.fillStyle = g; rrect(x, l, t, w, h, r); x.fill(); x.strokeStyle = V("edge-hi"); x.lineWidth = 1; x.stroke();
+  const s = x.createLinearGradient(0, t, 0, t + 8); s.addColorStop(0, rgba(V("ink"), 110)); s.addColorStop(1, rgba(V("ink"), 0));
+  x.fillStyle = s; rrect(x, l + 1, t + 1, w - 2, h - 2, r); x.fill(); }
+{ let x = ctxOf("panel1"); x.fillStyle = V("bg-window"); x.fillRect(0, 0, 300, 180); paintPanel(x, 10, 10, 280, 160);
+  x = ctxOf("panel2"); x.fillStyle = V("bg-window"); x.fillRect(0, 0, 300, 180); paintPanel(x, 10, 10, 280, 160, { head: "Parameters", notches: ["left", "right"] });
+  x = ctxOf("display1"); x.fillStyle = V("bg-panel"); x.fillRect(0, 0, 300, 140); paintDisplay(x, 10, 10, 280, 120); }
+/* viti sopra le card QSS e i dialog (decorate) */
+document.querySelectorAll("[data-screws]").forEach((el) => { const c = document.createElement("canvas"); c.style.cssText = "position:absolute;inset:0;pointer-events:none";
+  el.appendChild(c); const r = el.getBoundingClientRect(); c.width = r.width; c.height = r.height; const x = c.getContext("2d"); paintScrews(x, 0.5, 0.5, r.width - 1, r.height - 1); });
+
+/* ---------- pillole e chip disegnati ---------- */
+function paintPill(x, L, T, W, H, label, kind = "normal", o = {}) { const en = o.enabled ?? true, l = L + 0.5, t = T + 0.5, w = W - 1, h = H - 1, r = h / 2;
+  let top, bot, ink, edge;
+  if (!en) { top = bot = V("button-disabled"); ink = V("text-disabled"); edge = V("button-disabled"); }
+  else if (kind === "primary") [top, bot, ink, edge] = [V("accent-top"), V("accent-bottom"), V("on-accent"), V("accent-bottom")];
+  else if (kind === "mute") [top, bot, ink, edge] = [V("mute-top"), V("mute-bottom"), "#ffffff", V("mute-bottom")];
+  else if (kind === "off") [top, bot, ink, edge] = [V("bg-0"), V("bg-0"), V("text-muted"), V("edge-lo")];
+  else { top = V(o.hover ? "pill-hover-top" : "pill-top"); bot = V(o.hover ? "pill-hover-bottom" : "pill-bottom"); ink = V("button-text"); edge = V("edge-lo"); }
+  if (en && (kind === "primary" || kind === "mute")) { x.fillStyle = rgba(top, 60); rrect(x, l - 2.5, t - 2.5, w + 5, h + 5, r + 2.5); x.fill(); }
+  const g = x.createLinearGradient(0, t, 0, t + h); g.addColorStop(0, top); g.addColorStop(1, bot); x.fillStyle = g; rrect(x, l, t, w, h, r); x.fill();
+  x.setLineDash(o.pending ? [1.2 * 4, 1.2 * 2] : []); x.strokeStyle = o.pending ? V("meter-yellow") : edge; x.lineWidth = o.pending ? 1.2 : 1; x.stroke(); x.setLineDash([]);
+  if (en && kind === "normal") { x.strokeStyle = rgba(V("pill-hover-top"), 200); x.beginPath(); x.moveTo(l + r, t + 1); x.lineTo(l + w - r, t + 1); x.stroke(); }
+  x.font = font("button"); if (h < 20) x.font = x.font.replace(/[\d.]+px/, (m) => (parseFloat(m) - 1.333) + "px"); caps(x, "button");
+  x.fillStyle = ink; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(label.toUpperCase(), l + w / 2, t + h / 2 + 0.5); x.textAlign = "left"; x.letterSpacing = "0px"; }
+function paintChip(x, l, t, w, h, color, label) { x.fillStyle = V("bg-0"); rrect(x, l, t, w, h, h / 2); x.fill();
+  const cx = l + 12, cy = t + h / 2; x.fillStyle = rgba(color, 70); x.beginPath(); x.arc(cx, cy, 6, 0, 7); x.fill(); x.fillStyle = color; x.beginPath(); x.arc(cx, cy, 3.5, 0, 7); x.fill();
+  x.font = font("caption"); x.fillStyle = V("text-2"); x.textBaseline = "middle"; let s = label; const max = w - 30;
+  while (x.measureText(s).width > max && s.length > 1) s = s.slice(0, -2) + "…"; x.fillText(s, l + 22, cy); }
+{ const x = ctxOf("pills"); x.fillStyle = V("bg-panel"); x.fillRect(0, 0, 690, 46); let px = 10;
+  for (const [k, lab, o] of [["normal", "Unlock", {}], ["normal", "Unlock", { hover: true }], ["primary", "Lock", {}], ["mute", "D MUTED", {}], ["off", "D MUTE", {}], ["off", "D MUTE", { pending: true }], ["normal", "Open", { enabled: false }]]) { paintPill(x, px, 10, 84, 26, lab, k, o); px += 96; }
+  const c = ctxOf("chips"); c.fillStyle = V("bg-panel"); c.fillRect(0, 0, 220, 160); let y = 8;
+  for (const [s, lab] of [["ok", "Locked"], ["warn", "In use by another client"], ["error", "Lock lost"], ["busy", "Reading"], ["text-muted", "Offline unit"]]) { paintChip(c, 10, y, 200, 22, V(s), lab); y += 30; } }
+
+/* ---------- toggle (SVG identico a toggle_svg) ---------- */
+function toggleSvg(on, dis) { const track = dis ? V("button-disabled") : on ? V("accent") : V("bg-0"), knob = dis ? V("text-disabled") : on ? V("on-accent") : V("text-muted");
+  const stroke = on ? V("accent-bottom") : V("edge-field-top"), cx = on ? 22 : 8;
+  return `<svg width="30" height="16" viewBox="0 0 30 16"><rect x="0.5" y="0.5" width="29" height="15" rx="7.5" fill="${track}" stroke="${stroke}"/><circle cx="${cx}" cy="8" r="5" fill="${knob}"/></svg>`; }
+[["tg1", 0, 0], ["tg2", 1, 0], ["tg3", 0, 1], ["tg4", 1, 1]].forEach(([id, on, dis]) => {
+  document.getElementById(id).innerHTML = toggleSvg(on, dis) + `<span style="color:${dis ? V("text-disabled") : V("text")}">Enabled</span>`; });
+
+/* ---------- knob ---------- */
+class Knob {
+  constructor(o) { Object.assign(this, { label: "", min: 0, max: 1, value: 0, log: false, bipolar: false, size: 64, unit: "", decimals: 1, showValue: true, enabled: true, hover: false, drag: null, focus: false }, o);
+    if (this.log && this.min <= 0) this.log = false;
+    const c = document.createElement("canvas"); c.tabIndex = 0; this.c = c; this.layout();
+    c.addEventListener("pointerdown", (e) => { if (!this.enabled) return; c.setPointerCapture(e.pointerId); this.drag = [e.clientY, this.pos()]; this.draw(); });
+    c.addEventListener("pointermove", (e) => { if (!this.drag) return; const span = 220 * (e.shiftKey ? 10 : 1); this.moveTo(this.drag[1] + (this.drag[0] - e.clientY) / span); });
+    c.addEventListener("pointerup", () => { this.drag = null; this.draw(); });
+    c.addEventListener("pointerenter", () => { this.hover = true; this.draw(); }); c.addEventListener("pointerleave", () => { this.hover = false; this.draw(); });
+    c.addEventListener("wheel", (e) => { e.preventDefault(); if (!this.enabled) return; this.moveTo(this.pos() + (-e.deltaY / 100) * (e.shiftKey ? 0.002 : 0.01)); });
+    c.addEventListener("keydown", (e) => { const st = { ArrowUp: .01, ArrowRight: .01, ArrowDown: -.01, ArrowLeft: -.01, PageUp: .1, PageDown: -.1 }[e.key];
+      if (st !== undefined) { this.moveTo(this.pos() + st * (e.shiftKey ? .2 : 1)); e.preventDefault(); } else if (e.key === "Home") this.moveTo(0); else if (e.key === "End") this.moveTo(1); });
+    c.addEventListener("focus", () => { this.focus = true; this.draw(); }); c.addEventListener("blur", () => { this.focus = false; this.draw(); });
+    c.addEventListener("dblclick", () => { const v = prompt(this.label + " (edit_requested: il campo accanto riceve il fuoco)", this.value); if (v !== null && !isNaN(+v)) { this.value = Math.min(this.max, Math.max(this.min, +v)); this.draw(); } });
+    this.draw(); }
+  layout() { const lines = (this.label ? 1 : 0) + (this.showValue ? 1 : 0); const x = this.c.getContext("2d"); x.font = font("eyebrow"); caps(x, "eyebrow");
+    const lw = this.label ? x.measureText(this.label.toUpperCase()).width + 8 : 0;
+    this.w = Math.floor(Math.max(this.size + 16, this.label ? 72 : 0, lw)); this.h = this.size + 8 + lines * 16;
+    const dpr = window.devicePixelRatio || 1; this.c.width = this.w * dpr; this.c.height = this.h * dpr; this.c.style.width = this.w + "px"; this.c.style.height = this.h + "px"; }
+  pos() { if (this.max <= this.min) return 0; return this.log ? Math.log(this.value / this.min) / Math.log(this.max / this.min) : (this.value - this.min) / (this.max - this.min); }
+  valueAt(p) { p = Math.min(1, Math.max(0, p)); return this.log ? this.min * (this.max / this.min) ** p : this.min + (this.max - this.min) * p; }
+  moveTo(p) { this.value = this.valueAt(p); this.draw(); }
+  text() { return this.value.toFixed(this.decimals) + (this.unit ? " " + this.unit : ""); }
+  draw() { const x = this.c.getContext("2d"), dpr = window.devicePixelRatio || 1; x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, this.w, this.h);
+    const D = this.size, en = this.enabled, active = !!this.drag, rl = (this.w - D) / 2, rt = 4, cx = rl + D / 2, cy = rt + D / 2;
+    const ring = Math.max(3, D * 0.055), outerR = (D - ring - 2) / 2, bodyR = outerR - ring - 3;
+    const START = 225, SWEEP = 270, arc = (r, a0, a1) => { x.beginPath(); x.arc(cx, cy, r, -rad(a0), -rad(a1), a1 > a0); };   // Qt: gradi antiorari da ore 3
+    x.lineCap = "round"; x.strokeStyle = V("knob-track"); x.lineWidth = ring; arc(outerR, START, START - SWEEP); x.stroke();
+    const a0 = START - SWEEP * (this.bipolar ? 0.5 : 0), a1 = START - SWEEP * this.pos();
+    if (Math.abs(a1 - a0) > 0.3) { const col = en ? V("accent") : V("text-disabled");
+      if (en) { x.strokeStyle = rgba(col, active ? 120 : 70); x.lineWidth = ring * 2.4; arc(outerR, a0, a1); x.stroke(); }
+      x.strokeStyle = col; x.lineWidth = ring; arc(outerR, a0, a1); x.stroke(); }
+    x.fillStyle = rgba(V("ink"), 120); x.beginPath(); x.arc(cx, cy + 2, bodyR + 1, 0, 7); x.fill();
+    const gx = cx - bodyR + 2 * bodyR * 0.38, gy = cy - bodyR + 2 * bodyR * 0.32, g = x.createRadialGradient(gx, gy, 0, gx, gy, 2 * bodyR * 0.75);
+    g.addColorStop(0, this.hover && en ? V("pill-hover-top") : V("knob-hi")); g.addColorStop(1, V("knob-lo")); x.fillStyle = g; x.beginPath(); x.arc(cx, cy, bodyR, 0, 7); x.fill();
+    const cg = x.createConicGradient(-Math.PI / 2, cx, cy); cg.addColorStop(0, rgba(V("edge-hi"), 200)); cg.addColorStop(0.5, rgba(V("edge-lo"), 200)); cg.addColorStop(1, rgba(V("edge-hi"), 200));
+    x.strokeStyle = cg; x.lineWidth = 1.2; x.beginPath(); x.arc(cx, cy, bodyR - 0.6, 0, 7); x.stroke();
+    const dx = Math.cos(rad(a1)), dy = -Math.sin(rad(a1)); x.strokeStyle = en ? V("accent-hover") : V("text-disabled"); x.lineWidth = Math.max(2, D * 0.035);
+    x.beginPath(); x.moveTo(cx + dx * bodyR * 0.45, cy + dy * bodyR * 0.45); x.lineTo(cx + dx * bodyR * 0.82, cy + dy * bodyR * 0.82); x.stroke();
+    if (this.focus) { x.setLineDash([1, 2]); x.strokeStyle = rgba(V("accent"), 160); x.lineWidth = 1; x.beginPath(); x.arc(cx, cy, D / 2 + 2, 0, 7); x.stroke(); x.setLineDash([]); }
+    let y = rt + D + 4; x.textAlign = "center"; x.textBaseline = "middle";
+    if (this.label) { x.font = font("eyebrow"); caps(x, "eyebrow"); x.fillStyle = en ? V("text-2") : V("text-disabled"); x.fillText(this.label.toUpperCase(), this.w / 2, y + 8); x.letterSpacing = "0px"; y += 16; }
+    if (this.showValue) { x.font = font("body"); x.fillStyle = active && en ? V("accent") : en ? V("text-muted") : V("text-disabled"); x.fillText(this.text(), this.w / 2, y + 8); } }
+}
+const knobHost = document.getElementById("knobs");
+for (const [cap, o] of [["default", { label: "Threshold", min: -40, max: 0, value: -20, unit: "dB" }], ["bipolar", { label: "Gain", min: -12, max: 12, value: 3, bipolar: true, unit: "dB" }],
+  ["log", { label: "Frequency", min: 20, max: 20000, value: 2500, log: true, decimals: 0, unit: "Hz" }], ["hover", { label: "Threshold", min: -40, max: 0, value: -20, unit: "dB", hover: true }],
+  ["active (drag)", { label: "Threshold", min: -40, max: 0, value: -20, unit: "dB", drag: [0, 0] }], ["focus", { label: "Threshold", min: -40, max: 0, value: -20, unit: "dB", focus: true }],
+  ["disabled", { label: "Threshold", min: -40, max: 0, value: -20, unit: "dB", enabled: false }], ["52 px (maschere)", { label: "Attack", min: 0.1, max: 500, value: 5, unit: "ms", size: 52, showValue: false }],
+  ["40 px (pannelli stretti)", { label: "Ratio", min: 1, max: 21, value: 4, size: 40, showValue: false }], ["30 px (barra EQ)", { min: -12, max: 12, value: 4, bipolar: true, size: 30, showValue: false }]]) {
+  const k = new Knob(o); const cell = document.createElement("div"); cell.className = "cell"; cell.append(k.c); cell.insertAdjacentHTML("beforeend", `<div class="cap">${cap}</div>`); knobHost.append(cell); }
+
+/* ---------- vumeter ---------- */
+const LOW = -60, YEL = -12, RED = -3, GRMAX = 24;
+const levelFrac = (db) => Math.min(1, Math.max(0, (db - LOW) / -LOW)), grFrac = (db) => Math.min(1, Math.max(0, db / GRMAX));
+const frac = (k, db) => k === "gr" ? grFrac(db) : levelFrac(db);
+const levelColor = (db) => db >= RED ? V("error") : db >= YEL ? V("meter-yellow") : V("ok");
+function ledLayout(w, h) { const cols = w >= 10 ? 2 : 1; let d = Math.min(4, (w - (cols - 1) * 2) / cols); const rows = Math.max(1, Math.floor((h + 3) / (d + 3))); return [cols, rows, Math.max(1.5, d)]; }
+function paintLeds(x, l, t, w, h, kind, value, peak) { const [cols, rows, d] = ledLayout(w, h), py = rows > 1 ? (h - d) / (rows - 1) : 0, x0 = l + (w - (cols * d + (cols - 1) * 2)) / 2 + d / 2;
+  const lit = value == null ? 0 : Math.round(frac(kind, value) * rows), pk = peak != null && frac(kind, peak) > 0 ? Math.round(frac(kind, peak) * rows) : 0;
+  x.fillStyle = V("led-off"); for (let i = 0; i < rows; i++) for (let c = 0; c < cols; c++) { x.beginPath(); x.arc(x0 + c * (d + 2), t + d / 2 + i * py, d / 2, 0, 7); x.fill(); }
+  for (let i = 0; i < rows; i++) { const n = i + 1; if (!(n <= lit || n === pk)) continue; const y = t + d / 2 + (kind === "gr" ? i : rows - 1 - i) * py;
+    const col = kind === "gr" ? V("error") : levelColor(LOW * (1 - (n - 0.5) / rows));
+    for (let c = 0; c < cols; c++) { const cx = x0 + c * (d + 2); x.fillStyle = rgba(col, 70); x.beginPath(); x.arc(cx, y, d * 0.95, 0, 7); x.fill(); x.fillStyle = col; x.beginPath(); x.arc(cx, y, d / 2, 0, 7); x.fill(); } } }
+function paintBarH(x, l, t, w, h, kind, value, peak, seg) { const r = Math.min(w, h) / 2; x.save(); x.fillStyle = V("bg-0"); rrect(x, l, t, w, h, r); x.fill(); x.clip();
+  if (value != null) { const f = frac(kind, value) * w;
+    if (kind === "gr") { x.fillStyle = V("error"); x.fillRect(l + w - f, t, f, h); }
+    else { const g = x.createLinearGradient(l, 0, l + w, 0), yv = levelFrac(YEL), rv = levelFrac(RED); for (const [p, c] of [[0, "ok"], [yv - .025, "ok"], [yv, "meter-yellow"], [rv - .025, "meter-yellow"], [rv, "error"], [1, "error"]]) g.addColorStop(p, V(c)); x.fillStyle = g; x.fillRect(l, t, f, h); } }
+  if (seg) { x.strokeStyle = V("meter-bg"); x.lineWidth = 1; for (let p = 4; p < w; p += 4) { x.beginPath(); x.moveTo(l + p, t); x.lineTo(l + p, t + h); x.stroke(); } }
+  if (peak != null && (value == null || peak > value + .05) && frac(kind, peak) > 0) { const px = kind === "gr" ? l + w - frac(kind, peak) * w : l + frac(kind, peak) * w; x.fillStyle = kind === "gr" ? V("error") : levelColor(peak); x.fillRect(px - 1, t, 2, h); }
+  if (kind === "level") { x.strokeStyle = V("meter-tick"); x.lineWidth = 1; for (const db of [YEL, RED]) { const xx = l + w * levelFrac(db); x.beginPath(); x.moveTo(xx, t); x.lineTo(xx, t + h); x.stroke(); } }
+  x.restore(); }
+function paintLed(x, cx, cy, color, r = 5) { x.fillStyle = rgba(color, 60); x.beginPath(); x.arc(cx, cy, r + 2, 0, 7); x.fill(); x.fillStyle = color; x.strokeStyle = V("border"); x.lineWidth = 1; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); x.stroke(); }
+{ const x = ctxOf("leds"); x.fillStyle = V("bg-display"); x.fillRect(0, 0, 230, 170); let px = 12;
+  for (const [k, v, p] of [["level", null, null], ["level", -40, -30], ["level", -15, -9], ["level", -6, -2], ["level", 0, null], ["gr", 6, null], ["gr", 18, null]]) { paintLeds(x, px, 10, 14, 150, k, v, p); px += 30; }
+  const b = ctxOf("bars"); b.fillStyle = V("bg-display"); b.fillRect(0, 0, 240, 98); let y = 10;
+  for (const [k, v, s] of [["level", -20, false], ["level", -8, true], ["level", -1, true], ["gr", 6, false]]) { paintBarH(b, 10, y, 220, 10, k, v, null, s); y += 22; }
+  const lm = ctxOf("lims"); lm.fillStyle = V("bg-panel"); lm.fillRect(0, 0, 130, 40); Object.values(TOKENS.color_functional.limiter.values).forEach((c, i) => paintLed(lm, 20 + i * 30, 20, c, 6)); }
+{ /* MeterAnim (meters.py:73-99) a 33 ms */ const x = ctxOf("live"), inp = document.getElementById("liveIn"); const a = { shown: null, peak: null, age: 0 }; let last = performance.now();
+  setInterval(() => { const now = performance.now(), dt = Math.min((now - last) / 1000, 0.2); last = now; const target = +inp.value + (Math.random() - .5) * 6;
+    if (a.shown === null || target >= a.shown) a.shown = target; else a.shown = Math.max(target, a.shown - 30 * dt);
+    if (a.peak === null || a.shown >= a.peak) { a.peak = a.shown; a.age = 0; } else { a.age += dt; if (a.age > 1.2) a.peak = Math.max(a.shown, a.peak - 18 * dt); }
+    x.fillStyle = V("bg-display"); x.fillRect(0, 0, 180, 170); paintLeds(x, 20, 10, 14, 150, "level", a.shown, a.peak); paintBarH(x, 50, 75, 120, 10, "level", a.shown, a.peak, true);
+    x.font = font("value"); x.fillStyle = V("text"); x.fillText(a.shown.toFixed(1), 50, 110); }, 33); }
+
+/* ---------- grafico EQ (RBJ 96 kHz, come i biquad del DSP) ---------- */
+function biquadDb(type, f0, g, q, f) { const fs = 96000, A = 10 ** (g / 40), w0 = 2 * Math.PI * f0 / fs, al = Math.sin(w0) / (2 * q), cw = Math.cos(w0); let b0, b1, b2, a0, a1, a2;
+  if (type === "PEQ") { b0 = 1 + al * A; b1 = -2 * cw; b2 = 1 - al * A; a0 = 1 + al / A; a1 = -2 * cw; a2 = 1 - al / A; }
+  const w = 2 * Math.PI * f / fs, re = (c0, c1, c2) => [c0 + c1 * Math.cos(w) + c2 * Math.cos(2 * w), -(c1 * Math.sin(w) + c2 * Math.sin(2 * w))];
+  const [nr, ni] = re(b0, b1, b2), [dr, di] = re(a0, a1, a2); return 10 * Math.log10((nr * nr + ni * ni) / (dr * dr + di * di)); }
+{ const x = ctxOf("eq"), W = 900, H = 300, L = 40, R = 40, T = 10, B = 22, pw = W - L - R, ph = H - T - B, top = 18;
+  const fx = (f) => L + (Math.log10(f) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20)) * pw, fy = (d) => T + ph - (d + top) / (2 * top) * ph;
+  x.fillStyle = V("bg-surface"); x.fillRect(0, 0, W, H);
+  const g = x.createLinearGradient(0, T, 0, T + ph); g.addColorStop(0, V("plot-top")); g.addColorStop(1, V("plot-bottom")); x.fillStyle = g; rrect(x, L, T, pw, ph, 6); x.fill();
+  x.save(); x.beginPath(); x.rect(L, T, pw, ph); x.clip(); x.lineWidth = 1;
+  for (let d = 1; d <= 4; d++) for (let m = 1; m <= 9; m++) { const f = m * 10 ** d; if (f < 20 || f > 20000) continue; const major = [100, 1000, 10000].includes(f);
+    x.strokeStyle = major ? V("grid-major") : V("grid-minor"); const xx = Math.floor(fx(f)) + .5; x.beginPath(); x.moveTo(xx, T); x.lineTo(xx, T + ph); x.stroke(); }
+  x.strokeStyle = V("grid-minor"); for (let k = -3; k <= 3; k++) { const yy = Math.floor(fy(k * 6)) + .5; x.beginPath(); x.moveTo(L, yy); x.lineTo(L + pw, yy); x.stroke(); }
+  x.strokeStyle = V("zero-line"); x.lineWidth = 1.2; x.beginPath(); x.moveTo(L, fy(0)); x.lineTo(L + pw, fy(0)); x.stroke();
+  const bands = [[0, 80, 4, .9], [1, 320, -3.5, 2], [3, 2500, 2.5, 1.4], [5, 9000, -5, .7]], sel = 3, freqs = []; for (let i = 0; i <= 300; i++) freqs.push(20 * 1000 ** (i / 300));
+  for (const [n, f0, gdb, q] of [...bands].sort((a, b) => (a[0] === sel) - (b[0] === sel))) { const col = TOKENS.color_functional.band.values[n % 8], focus = n === sel;
+    x.beginPath(); freqs.forEach((f, i) => x[i ? "lineTo" : "moveTo"](fx(f), fy(biquadDb("PEQ", f0, gdb, q, f)))); x.lineTo(fx(20000), fy(0)); x.lineTo(fx(20), fy(0)); x.fillStyle = rgba(col, focus ? 64 : 30); x.fill();
+    x.beginPath(); freqs.forEach((f, i) => x[i ? "lineTo" : "moveTo"](fx(f), fy(biquadDb("PEQ", f0, gdb, q, f)))); x.strokeStyle = col; x.lineWidth = focus ? 2 : 1.2; x.stroke(); }
+  const total = (f) => bands.reduce((s, b) => s + biquadDb("PEQ", b[1], b[2], b[3], f), 0); x.lineCap = x.lineJoin = "round";
+  for (const [a, w] of [[22, 7], [46, 4], [255, 2.2]]) { x.beginPath(); freqs.forEach((f, i) => x[i ? "lineTo" : "moveTo"](fx(f), fy(total(f)))); x.strokeStyle = rgba(V("text"), a); x.lineWidth = w; x.stroke(); }
+  x.restore();
+  for (const [n, f0] of bands) { const col = TOKENS.color_functional.band.values[n % 8], px = fx(f0), py = fy(total(f0));
+    if (n === sel) { x.fillStyle = rgba(col, 70); x.beginPath(); x.arc(px, py, 16, 0, 7); x.fill(); x.strokeStyle = V("text"); x.lineWidth = 2; x.beginPath(); x.arc(px, py, 12, 0, 7); x.stroke(); }
+    x.fillStyle = col; x.strokeStyle = V("plot-bottom"); x.lineWidth = 1.5; x.beginPath(); x.arc(px, py, 9, 0, 7); x.fill(); x.stroke();
+    x.fillStyle = textOn(col);
+    x.font = `700 ${getComputedStyle(document.documentElement).getPropertyValue("--font-caption-size")} ${FONT}`; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(n, px, py + .5); }
+  /* banda spenta: punto grigio sullo 0 dB (plots.py:1084-1102) */
+  { const gx = fx(1000), gy = fy(0); x.fillStyle = V("plot-bottom"); x.strokeStyle = V("control"); x.lineWidth = 1.4; x.beginPath(); x.arc(gx, gy, 6.5, 0, 7); x.fill(); x.stroke();
+    x.font = font("caption"); x.fillStyle = V("text-muted"); x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("2", gx, gy + .5); }
+  x.font = font("caption"); x.fillStyle = V("text-muted"); x.textAlign = "center";
+  for (const f of [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]) x.fillText(f >= 1000 ? f / 1000 + "k" : f, Math.min(Math.max(fx(f), 24), W - 24), T + ph + 11);
+  x.textAlign = "right"; for (let k = -3; k <= 3; k++) x.fillText(k ? (k > 0 ? "+" : "") + k * 6 : "0", L - 6, fy(k * 6)); x.textAlign = "left"; for (let k = -3; k <= 3; k++) x.fillText(k ? (k > 0 ? "+" : "") + k * 6 : "0", L + pw + 6, fy(k * 6));
+  x.strokeStyle = V("plot-frame"); x.lineWidth = 1; rrect(x, L + .5, T + .5, pw - 1, ph - 1, 6); x.stroke();
+  /* etichetta del valore (plots.py:1148-1213) */ const px = fx(2500), py = fy(total(2500)) - 9 - 10 - 22; x.font = `700 ${getComputedStyle(document.documentElement).getPropertyValue("--font-body-size")} ${FONT}`;
+  const txt = "2.50 kHz  ·  +2.5 dB  ·  Q 1.40", tw = x.measureText(txt).width + 32; x.fillStyle = rgba(V("bg-elevated"), 238); x.strokeStyle = rgba(TOKENS.color_functional.band.values[3], 220); rrect(x, px - tw / 2, py, tw, 22, 6); x.fill(); x.stroke();
+  x.fillStyle = TOKENS.color_functional.band.values[3]; x.beginPath(); x.arc(px - tw / 2 + 13, py + 11, 5, 0, 7); x.fill(); x.fillStyle = V("text"); x.textBaseline = "middle"; x.fillText(txt, px - tw / 2 + 24, py + 11.5); }
+
+/* ---------- tessere della catena (chain_view.py) ---------- */
+function paintTile(x, ox, oy, o) { const W = 120, H = 80, r = 8; x.save(); x.translate(ox, oy);
+  for (const [dy, a] of [[3, 60], [1.5, 80]]) { x.fillStyle = rgba(V("shadow"), a); rrect(x, 0, dy, W, H, r); x.fill(); }
+  if (o.selected) for (const [w, a] of [[8, 45], [4.5, 90]]) { x.strokeStyle = rgba(V("accent"), a); x.lineWidth = w; rrect(x, 0, 0, W, H, r); x.stroke(); }
+  let fill = o.section ? TOKENS.color_functional.section.values[o.section] : o.muted ? V("mute-fill") : V("bg-surface"); if (o.hover && !o.muted) fill = lighter(fill, o.section ? 112 : 125);
+  if (o.section) x.fillStyle = fill; else { const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, lighter(fill, 116)); g.addColorStop(1, darker(fill, 108)); x.fillStyle = g; }
+  rrect(x, 0, 0, W, H, r); x.fill(); x.strokeStyle = o.selected ? V("accent") : TOKENS.color_functional.category.values[o.cat]; x.lineWidth = o.selected ? 2.4 : 1.6; if (o.dup) x.setLineDash([2.4 * 4, 2.4 * 2]); x.stroke(); x.setLineDash([]);
+  const ink = o.section ? textOn(fill) : null;
+  x.font = `${o.dup ? "italic " : ""}700 10.67px ${FONT}`; x.fillStyle = ink || V("text"); x.textBaseline = "top";
+  wrap2(x, o.label, 120 - 25 - 18 - (o.section ? 16 : 0)).forEach((ln, i) => x.fillText(ln, 25, 5 + i * 13));
+  x.strokeStyle = ink || V("text-muted"); x.lineWidth = 1.4; x.lineCap = x.lineJoin = "round"; x.beginPath(); x.moveTo(8, 6 + 13 * .75); x.bezierCurveTo(8 + 13 * .3, 6 + 13 * .75, 8 + 13 * .35, 6 + 13 * .1, 8 + 13 * .5, 6 + 13 * .1); x.bezierCurveTo(8 + 13 * .65, 6 + 13 * .1, 8 + 13 * .7, 6 + 13 * .75, 8 + 13, 6 + 13 * .75); x.stroke();
+  if (o.section) { x.fillStyle = ink; rrect(x, 82, 5, 15, 14, 3); x.fill(); x.fillStyle = fill; x.font = `700 10px ${FONT}`; x.textAlign = "center"; x.fillText(o.section, 89.5, 7); x.textAlign = "left"; }
+  if (o.section && !o.muted) { x.strokeStyle = ink; x.lineWidth = 1.6; x.beginPath(); x.arc(108, 12, 4.2, 0, 7); if (o.led) { x.fillStyle = ink; x.fill(); } x.stroke(); }
+  else paintLed(x, 108, 12, o.muted ? V("error") : o.led ? V("ok") : V("button-disabled"), 4.5);   /* chain_view.py:1079-1092 */
+  if (o.meters) { let y = H - 6 - 11 * 2; for (const [k, v] of [["level", -14], ["gr", 3]]) { paintBarH(x, 8, y + 2.5, 120 - 14 - 30 - 3, 6, k, v); x.font = `400 10px ${FONT}`; x.fillStyle = k === "gr" ? V("error") : V("text-muted"); x.textAlign = "right"; x.textBaseline = "middle"; x.fillText(v.toFixed(1), 8 + 106, y + 5); x.textAlign = "left"; y += 11; } }
+  if (o.pending) { x.fillStyle = V("accent"); x.beginPath(); x.moveTo(W - 16, H); x.lineTo(W - r, H); x.quadraticCurveTo(W, H, W, H - r); x.lineTo(W, H - 16); x.closePath(); x.fill(); }
+  x.restore(); }
+{ const x = ctxOf("tiles"); x.fillStyle = V("bg-window"); x.fillRect(0, 0, 820, 130); paintDisplay(x, 4, 4, 812, 122, 10);
+  [[{ label: "User eq", cat: "user", led: true }, "normal"], [{ label: "User eq", cat: "user", led: true, hover: true }, "hover"], [{ label: "Output limiter", cat: "preset", led: true, meters: true, selected: true }, "selected"],
+   [{ label: "Acoustic resp. FIR", cat: "preset", section: "N", led: true }, "sezione N"], [{ label: "Output mute", cat: "user", muted: true }, "mute"], [{ label: "Common way eq", cat: "preset", dup: true, pending: true }, "dup + pending"]]
+    .forEach(([o], i) => paintTile(x, 16 + i * 134, 22, o)); }
+
+/* ---------- scheda unita' (system_view.py) ---------- */
+function paintCard(x, L, T, W, H, o) { paintPanel(x, L, T, W, H, { notches: ["left"] });
+  if (o.selected) { x.strokeStyle = rgba(V("accent"), 70); x.lineWidth = 4; rrect(x, L - .5, T - .5, W + 1, H - 1, 15); x.stroke(); x.strokeStyle = V("accent"); x.lineWidth = 1.6; rrect(x, L + .5, T + .5, W - 1, H - 3, 14); x.stroke(); }
+  const il = L + 22, it = T + 9, iw = W - 44, ih = H - 22; x.font = font("caption"); const cw = Math.min(x.measureText(o.status[1]).width + 32, iw * .55);
+  paintChip(x, il + iw - cw, it, cw, 22, V(o.status[0]), o.status[1]);
+  x.font = font("heading"); caps(x, "heading"); x.fillStyle = V("text"); x.textBaseline = "middle"; x.fillText(o.title.toUpperCase(), il, it + 11); x.letterSpacing = "0px";
+  x.font = font("caption"); x.fillStyle = V("text-muted"); x.fillText(o.info, il, it + 31);
+  const sl = il, st = it + 44, sw = iw, sh = ih - 44 - 34, col = sw / 4;
+  for (const [base, ways, name] of o.groups) { const bl = sl + base * col + 2, bw = col * ways - 4; paintDisplay(x, bl, st, bw, sh, 8);
+    x.font = font("eyebrow"); caps(x, "eyebrow"); x.fillStyle = V("text"); x.fillText(name.toUpperCase(), bl + 8, st + 11); x.letterSpacing = "0px";
+    for (let out = base; out < base + ways; out++) { const cl = sl + out * col + 6, ct = st + 20, cwid = col - 12, chh = sh - 24, mh = chh - 16 - 4, mx = cl + cwid / 2;
+      paintLeds(x, mx - 9, ct, 8, mh, "level", -18 + out * 3); paintLeds(x, mx + 2, ct, 5, mh, "gr", out === 1 ? 4 : 0); paintLed(x, mx + 16, ct + 5, TOKENS.color_functional.limiter.values[1], 3);
+      x.font = font("caption"); x.fillStyle = V("text-muted"); x.fillText("LIM", mx + 21, ct + 5.5);
+      paintPill(x, cl, ct + chh - 16, cwid, 16, `${"ABCD"[out]} ${o.muted === out ? "MUTED" : "MUTE"}`, o.muted === out ? "mute" : "off"); } }
+  const by = it + ih - 26; paintPill(x, il, by, 84, 26, o.locked ? "Unlock" : "Lock", o.locked ? "normal" : "primary"); paintPill(x, il + iw - 70, by, 70, 26, "Open"); }
+{ const x = ctxOf("cards"); x.fillStyle = V("bg-window"); x.fillRect(0, 0, 760, 210);
+  paintCard(x, 6, 6, 368, 196, { title: "Stage-L", info: "192.168.1.31 · XPS 16K · fw 23", status: ["ok", "Locked"], groups: [[0, 2, "A B · 2Way"], [2, 2, "C D · 2Way"]], locked: true, selected: true });
+  paintCard(x, 386, 6, 368, 196, { title: "Fill", info: "192.168.1.41 · XPS 16K · fw 23", status: ["ok", "Locked"], groups: [[0, 1, "A · 1Way"], [1, 1, "B · 1Way"], [2, 1, "C · 1Way"], [3, 1, "D · 1Way"]], locked: true, muted: 3 }); }
+
+/* ---------- chip della barra e barra I/O ---------- */
+{ const x = ctxOf("topchips"); let px = 0; for (const [s, t] of [["warn", "6 units · 4 locked · 1 in use · 1 not on network"], ["warn", "◤ 2 blocks to send"], ["text-muted", "System"]]) {
+    x.font = font("caption"); const w = Math.min(x.measureText(t).width + 34, 200); paintChip(x, px + .5, .5, w - 1, 23, V(s), t); px += w + 8; } }
+{ const c = document.getElementById("iobar"); const x = ctxOf("iobar"), W = 1200, H = 32; x.fillStyle = V("bg-io-bar"); x.fillRect(0, 0, W, H);
+  x.strokeStyle = V("edge-lo"); x.beginPath(); x.moveTo(0, .5); x.lineTo(W, .5); x.stroke(); x.strokeStyle = V("edge-hi"); x.beginPath(); x.moveTo(0, 1.5); x.lineTo(W, 1.5); x.stroke();
+  for (const at of [.3, .7]) { const sx = W * at, t = 2, b = H, sw = 70; x.save(); x.beginPath(); x.moveTo(sx + sw * .3, t); x.lineTo(sx + sw, t); x.lineTo(sx + sw * .7, b); x.lineTo(sx, b); x.closePath(); x.clip();
+    x.strokeStyle = rgba(V("accent"), 115); x.lineWidth = 2; const shift = (b - t) / Math.tan(rad(60)); for (let p = sx - shift; p < sx + sw + shift; p += 9) { x.beginPath(); x.moveTo(p, b); x.lineTo(p + shift, t); x.stroke(); } x.restore(); }
+  x.font = font("body"); x.fillStyle = V("text-2"); x.textBaseline = "middle"; x.fillText("Delay: Lock refused: 4.03 Forbidden", 8, 17); }
+</script>
+</body>
+</html>

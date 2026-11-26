@@ -1,0 +1,436 @@
+/* =====================================================================================
+   LBS Labs · componenti "Graphite hardware" (presi da Moviola). Richiede lbs-tokens.css e lbs-base.css.
+   Trasparenze dei token con color-mix: alpha(c, N) = N/255.
+   Prefisso ds- = componente del design system; il markup di ognuno è in ../anteprima.html.
+   ===================================================================================== */
+
+/* ======================= 4.1 Pannello ======================= */
+.ds-panel {
+  position: relative;
+  background: var(--gradient-panel);
+  border: 1px solid var(--color-edge-lo);
+  border-radius: var(--radius-l);
+  /* ombra a 2 strati senza sfocatura + filo di luce in alto */
+  box-shadow: var(--shadow-panel), inset 0 1px 0 var(--color-edge-hi);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.ds-panel--qss { background: var(--gradient-panel-qss); }
+.ds-panel__head {
+  flex: none;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px 0 23px; /* titolo a x+24 dal bordo esterno */
+  background: var(--color-bg-display);
+  border-bottom: 1px solid var(--color-edge-lo);
+  border-radius: calc(var(--radius-l) - 1px) calc(var(--radius-l) - 1px) 0 0;
+}
+.ds-panel__title { flex: 1; min-width: 0; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ds-panel__body { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 20px 20px; }
+.ds-panel__body--head { padding-top: 10px; }
+.ds-panel__body--noscrews { padding-left: 12px; padding-right: 12px; }
+
+/* viti: centro a 10 px dagli angoli esterni, raggio 2.4, ombra ink α90 a dy +0.6 */
+.ds-screw {
+  position: absolute;
+  width: 4.8px;
+  height: 4.8px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+  background: radial-gradient(circle 3.84px at calc(50% - 0.8px) calc(50% - 0.8px), var(--color-slider-track), var(--color-screw));
+  box-shadow: 0 0.6px 0 0.6px color-mix(in srgb, var(--color-ink) 35.3%, transparent);
+}
+.ds-screw--tl { left: 6.6px; top: 6.6px; }
+.ds-screw--tr { right: 6.6px; top: 6.6px; }
+.ds-screw--bl { left: 6.6px; bottom: 6.6px; }
+.ds-screw--br { right: 6.6px; bottom: 6.6px; }
+
+/* rientranza trapezoidale: dal 34% al 66% dell'altezza, profonda 10, smusso 14% */
+.ds-notch {
+  position: absolute;
+  top: 34%;
+  height: 32%;
+  width: 11px;
+  background: var(--color-edge-lo);
+  pointer-events: none;
+  z-index: 2;
+}
+.ds-notch::after { content: ''; position: absolute; inset: 1px 0; background: var(--color-bg-window); clip-path: inherit; }
+.ds-notch--right { right: -1px; clip-path: polygon(100% 0, 0 14%, 0 86%, 100% 100%); }
+.ds-notch--right::after { right: 0; left: 1px; }
+.ds-notch--left { left: -1px; clip-path: polygon(0 0, 100% 14%, 100% 86%, 0 100%); }
+.ds-notch--left::after { left: 0; right: 1px; }
+
+/* ======================= 4.2 Display incassato ======================= */
+.ds-display {
+  position: relative;
+  background: var(--gradient-display);
+  border: 1px solid var(--color-edge-hi);
+  border-radius: var(--radius-m);
+  min-width: 0;
+  min-height: 0;
+}
+/* ombra interna: ink α110 → 0 sugli 8 px alti */
+.ds-display::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-ink) 43.1%, transparent) 0, transparent 8px);
+}
+.ds-display--pad { padding: 10px 12px; }
+
+/* ======================= 4.3 Pulsanti a pillola ======================= */
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: none;
+  font-size: var(--font-button-size);
+  font-weight: var(--font-button-weight);
+  text-transform: uppercase;
+  letter-spacing: var(--font-button-tracking);
+  color: var(--color-button-text);
+  background: var(--gradient-pill);
+  border: 1px solid var(--color-edge-lo);
+  border-top-color: var(--color-pill-hover-top);
+  border-radius: 13px;
+  padding: 4px 14px;
+  height: 26px;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: default;
+}
+.ds-btn:hover { background: var(--gradient-pill-hover); }
+.ds-btn:active { background: var(--color-pill-bottom); border-top-color: var(--color-edge-lo); }
+.ds-btn:focus-visible { border-color: var(--color-accent); }
+.ds-btn.is-checked { background: var(--gradient-accent); color: var(--color-on-accent); border-color: var(--color-accent-bottom); border-top-color: var(--color-accent-hover); }
+.ds-btn:disabled, .ds-btn:disabled:hover { background: var(--color-button-disabled); color: var(--color-text-disabled); border-color: var(--color-button-disabled); }
+
+.ds-btn--primary { background: var(--gradient-accent); color: var(--color-on-accent); border-color: var(--color-accent-bottom); border-top-color: var(--color-accent-hover);
+  /* bagliore: colore top α60, +2.5 px */
+  box-shadow: var(--glow-accent); }
+.ds-btn--primary:hover { background: var(--gradient-accent-hover); }
+.ds-btn--primary:active { background: var(--color-accent-bottom); }
+.ds-btn--primary:focus-visible { border-color: var(--color-accent-hover); }
+.ds-btn--primary:disabled { box-shadow: none; }
+
+.ds-btn--ghost { background: transparent; color: var(--color-text-muted); border: 1px solid transparent; }
+.ds-btn--ghost:hover { background: transparent; color: var(--color-text); border-color: var(--color-border-field); }
+.ds-btn--ghost:active { background: transparent; color: var(--color-text); border-color: var(--color-border-field); }
+.ds-btn--ghost:focus-visible { border-color: var(--color-accent); }
+.ds-btn--ghost.is-checked { background: transparent; color: var(--color-accent); border-color: var(--color-accent); }
+.ds-btn--ghost:disabled, .ds-btn--ghost:disabled:hover { background: transparent; color: var(--color-text-disabled); border-color: transparent; }
+
+.ds-btn--small { padding: 2px 10px; height: 22px; border-radius: 10px; }
+.ds-btn--icon { padding: 0; width: 26px; }
+.ds-btn--icon.ds-btn--small { width: 22px; }
+
+.ds-btn--mute { background: var(--color-bg-0); color: var(--color-text-muted); border: 1px solid var(--color-edge-lo); border-radius: 11px; padding: 1px 8px; height: 22px; }
+.ds-btn--mute:hover, .ds-btn--mute:active { background: var(--color-bg-0); color: var(--color-text); border-color: var(--color-edge-lo); }
+.ds-btn--mute.is-checked { background: var(--gradient-mute); color: var(--color-mute-text); border-color: var(--color-mute-bottom); border-top-color: var(--color-mute-top);
+  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--color-mute-top) 23.5%, transparent); }
+.ds-btn--mute.is-pending { border: 1px dashed var(--color-meter-yellow); }
+
+.ds-btn__icon { width: 16px; height: 16px; flex: none; }
+.ds-btn--compact-labels .ds-btn__label { display: none; }
+
+/* ---- segmentato ---- */
+.ds-seg { display: inline-flex; background: var(--color-bg-0); border-radius: var(--radius-segment-outer); }
+.ds-seg--full { display: flex; }
+.ds-seg--full .ds-seg__item { flex: 1; }
+.ds-seg__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: var(--font-button-size);
+  font-weight: var(--font-button-weight);
+  text-transform: uppercase;
+  letter-spacing: var(--font-button-tracking);
+  background: var(--color-bg-0);
+  color: var(--color-text-2);
+  border: 3px solid var(--color-bg-0);
+  border-radius: 0;
+  padding: 2px 14px;
+  min-width: 48px;
+  height: 28px;
+  line-height: 16px;
+  margin: 0;
+  white-space: nowrap;
+}
+.ds-seg__item:first-child { border-radius: 14px 0 0 14px; }
+.ds-seg__item:last-child { border-radius: 0 14px 14px 0; }
+.ds-seg__item:hover { color: var(--color-text); }
+.ds-seg__item:focus-visible { color: var(--color-text); box-shadow: inset 0 0 0 1px var(--color-accent); }
+.ds-seg__item.is-checked { background: var(--gradient-accent); color: var(--color-on-accent); border-radius: var(--radius-segment-inner); }
+.ds-seg__item:disabled { color: var(--color-text-disabled); }
+.ds-seg__item.is-checked:disabled { background: var(--color-button-disabled); }
+.ds-seg__count { font-variant-numeric: tabular-nums; opacity: 0.8; }
+.ds-seg--small .ds-seg__item { min-width: 0; padding: 2px 10px; height: 26px; border-radius: 10px; }
+.ds-seg--small .ds-seg__item.is-checked { border-radius: 11px; }
+
+/* ======================= 4.4 Interruttore ======================= */
+.ds-toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--color-text); }
+.ds-toggle.is-disabled { color: var(--color-text-disabled); }
+.ds-toggle__track { flex: none; }
+.ds-toggle:focus-visible .ds-toggle__track rect { stroke: var(--color-accent); }
+
+/* ======================= 4.5 Campi ======================= */
+.ds-field {
+  font-size: var(--font-body-size);
+  color: var(--color-text);
+  background: var(--color-bg-field);
+  border: 1px solid var(--color-edge-lo);
+  border-top-color: var(--color-edge-field-top);
+  border-bottom-color: var(--color-edge-hi);
+  border-radius: var(--radius-s);
+  padding: 2px 6px;
+  height: 24px;
+  min-width: 0;
+  outline: none;
+  user-select: text;
+}
+.ds-field:hover { border-color: var(--color-border-field-hover); }
+.ds-field:focus, .ds-field:focus-within { border-color: var(--color-accent); }
+.ds-field:disabled, .ds-field.is-disabled { background: transparent; color: var(--color-text-disabled); border-color: var(--color-border); }
+.ds-field::placeholder { color: var(--color-text-muted); }
+.ds-field--num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.ds-search { position: relative; display: flex; align-items: center; }
+.ds-search .ds-field { width: 100%; padding-right: 22px; }
+.ds-search__clear { position: absolute; right: 2px; top: 2px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-muted); background: transparent; border: 0; border-radius: 4px; padding: 0; }
+.ds-search__clear:hover { color: var(--color-text); background: var(--color-button); }
+
+.ds-combo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  text-align: left;
+  padding-right: 4px;
+  white-space: nowrap;
+}
+.ds-combo__value { overflow: hidden; text-overflow: ellipsis; }
+.ds-combo__arrow { width: 10px; height: 10px; flex: none; color: var(--color-text-muted); }
+.ds-combo:disabled .ds-combo__arrow { color: var(--color-button-disabled); }
+
+/* ======================= 4.6 Slider ======================= */
+.ds-slider { -webkit-appearance: none; appearance: none; height: 18px; background: transparent; margin: 0; }
+.ds-slider::-webkit-slider-runnable-track { height: 6px; background: var(--color-slider-track); border-radius: 3px; border-top: 1px solid var(--color-text-muted); }
+.ds-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 18px; margin-top: -7px; border-radius: 4px; background: var(--gradient-thumb); border: 1px solid var(--color-edge-lo); }
+.ds-slider:hover::-webkit-slider-thumb { border-color: var(--color-accent-hover); }
+.ds-slider:focus-visible::-webkit-slider-thumb { border-color: var(--color-accent); }
+.ds-slider:disabled::-webkit-slider-runnable-track { background: var(--color-button-disabled); border-top-color: var(--color-button-disabled); }
+.ds-slider:disabled::-webkit-slider-thumb { background: var(--color-text-disabled); border-color: var(--color-edge-lo); }
+
+/* ======================= 4.9 Chip di stato ======================= */
+.ds-chip {
+  --chip-color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: 24px;
+  min-width: 64px;
+  max-width: 260px;
+  padding: 0 12px 0 22px;
+  position: relative;
+  background: var(--color-bg-0);
+  border-radius: 12px;
+  border: 0;
+  color: var(--color-text-2);
+  font-size: var(--font-caption-size);
+  font-weight: var(--font-caption-weight);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ds-chip__text { overflow: hidden; text-overflow: ellipsis; }
+/* LED a x+12: alone α70 r 6, disco r 3.5 */
+.ds-chip::before { content: ''; position: absolute; left: 6px; top: calc(50% - 6px); width: 12px; height: 12px; border-radius: 50%;
+  background: color-mix(in srgb, var(--chip-color) 27.5%, transparent); }
+.ds-chip::after { content: ''; position: absolute; left: 8.5px; top: calc(50% - 3.5px); width: 7px; height: 7px; border-radius: 50%; background: var(--chip-color); }
+.ds-chip--small { height: 22px; border-radius: 11px; }
+.ds-chip--mini { height: 16px; min-width: 0; padding: 0 6px 0 14px; border-radius: 8px; font-size: var(--font-caption-size); }
+.ds-chip--mini::before { left: 3px; top: calc(50% - 4px); width: 8px; height: 8px; }
+.ds-chip--mini::after { left: 4.75px; top: calc(50% - 2.25px); width: 4.5px; height: 4.5px; }
+.ds-chip--ok { --chip-color: var(--color-ok); }
+.ds-chip--warn { --chip-color: var(--color-warn); }
+.ds-chip--error { --chip-color: var(--color-error); }
+.ds-chip--busy { --chip-color: var(--color-busy); }
+.ds-chip--idle { --chip-color: var(--color-text-muted); }
+button.ds-chip:hover { color: var(--color-text); }
+button.ds-chip:focus-visible { box-shadow: inset 0 0 0 1px var(--color-accent); }
+
+/* ======================= 4.10 Banner, tooltip, menu ======================= */
+.ds-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-left: 3px solid;
+  border-radius: var(--radius-s);
+  padding: 4px 4px 4px 8px;
+  min-height: 28px;
+}
+.ds-banner--info { color: var(--color-busy); background: var(--color-info-bg); border-left-color: var(--color-busy); }
+.ds-banner--warn { color: var(--color-warn); background: var(--color-warn-bg); border-left-color: var(--color-warn); }
+.ds-banner__text { flex: 1; min-width: 0; }
+.ds-banner__actions { display: flex; gap: 4px; align-items: center; }
+
+.ds-tooltip {
+  position: fixed;
+  z-index: 1000;
+  max-width: 320px;
+  background: var(--color-bg-display);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: 4px;
+  font-size: var(--font-body-size);
+  pointer-events: none;
+  white-space: pre-line;
+}
+
+.ds-menu {
+  position: fixed;
+  z-index: 900;
+  min-width: 200px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-edge-lo);
+  padding: 4px;
+  outline: none;
+}
+.ds-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 24px 4px 12px;
+  border-radius: var(--radius-s);
+  color: var(--color-text);
+  white-space: nowrap;
+  min-height: 24px;
+}
+.ds-menu__item.is-active { background: var(--color-selection); color: var(--color-on-selection); }
+.ds-menu__item.is-disabled { color: var(--color-text-disabled); }
+.ds-menu__item.is-disabled.is-active { background: var(--color-bg-elevated); color: var(--color-text-disabled); }
+.ds-menu__label { flex: 1; }
+.ds-menu__shortcut { color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.ds-menu__item.is-active .ds-menu__shortcut { color: var(--color-on-selection); }
+.ds-menu__item.is-disabled .ds-menu__shortcut { color: var(--color-text-disabled); }
+.ds-menu__sep { height: 1px; background: var(--color-border); margin: 4px 8px; }
+.ds-menu__check { width: 12px; display: inline-flex; }
+
+/* barra dei menu (dentro la barra superiore) */
+.ds-menubar { display: flex; align-items: center; }
+.ds-menubar__item { padding: 4px 8px; border-radius: var(--radius-s); color: var(--color-text-2); background: transparent; border: 0; font-size: var(--font-body-size); }
+.ds-menubar__item:hover { color: var(--color-text); }
+.ds-menubar__item.is-open { background: var(--color-selection); color: var(--color-on-selection); }
+
+/* ======================= 4.15 Barra I/O ======================= */
+.ds-iobar { position: relative; height: 32px; flex: none; background: var(--color-bg-io-bar); }
+.ds-iobar canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ds-iobar__content { position: absolute; inset: 2px 0 0 0; display: flex; align-items: center; padding: 0 8px; gap: 8px; color: var(--color-text-2); }
+.ds-iobar__msg { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ======================= stati vuoti ======================= */
+.ds-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; padding: 16px; z-index: 1; }
+.ds-empty__title { color: var(--color-text-muted); }
+.ds-empty__caption { color: var(--color-text-muted); }
+
+.ds-eyebrow-label { color: var(--color-text-2); }
+
+/* =====================================================================================
+   Schemi di Moviola: barra superiore, dialog, liste, barre di avanzamento, card di scelta,
+   finestre flottanti. Le misure sono quelle dell'app.
+   ===================================================================================== */
+
+/* ---------------- barra superiore della finestra (alta 48) ---------------- */
+.ds-topbar {
+  flex: none;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--gradient-topbar);
+  border-bottom: 1px solid var(--color-edge-lo);
+  -webkit-app-region: drag;            /* in Electron la barra trascina la finestra */
+}
+.ds-topbar .no-drag, .ds-topbar button, .ds-topbar input { -webkit-app-region: no-drag; }
+.ds-topbar__left { display: flex; align-items: center; gap: 8px; flex: 1 1 0; min-width: 0; }
+.ds-topbar__center { flex: 1 1 0; display: flex; justify-content: center; min-width: 0; }
+.ds-topbar__right { flex: 1 1 0; display: flex; justify-content: flex-end; gap: 8px; min-width: 0; }
+.ds-topbar__mac-lights { width: 64px; flex: none; }   /* spazio per i tre pallini del Mac */
+.ds-topbar--windows { padding-right: 150px; }          /* spazio per – ▢ ✕ di Windows */
+/* menu a 14 px e chip a 12 px: barra più leggibile (scelta di Moviola) */
+.ds-topbar .ds-menubar__item { font-size: 14px; padding: 4px 10px; }
+.ds-topbar__right .ds-chip { font-size: 12px; height: 26px; border-radius: 13px; max-width: 300px; }
+.ds-wordmark { font-weight: 400; color: var(--color-text-2); margin-left: 4px; }
+/* nome del documento al centro: ruolo heading +2 px, bordo solo al passaggio del mouse (si rinomina) */
+.ds-docname {
+  display: inline-flex; align-items: center; gap: 12px;
+  background: transparent; border: 1px solid transparent; border-radius: var(--radius-s);
+  padding: 2px 8px; color: var(--color-text);
+  font-size: calc(var(--font-heading-size) + 2px); font-weight: var(--font-heading-weight); letter-spacing: var(--font-heading-tracking);
+  white-space: nowrap; max-width: 100%;
+}
+.ds-docname:hover { border-color: var(--color-border-field); }
+
+/* ---------------- dialog modale ---------------- */
+.ds-backdrop { position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--color-ink) 35.3%, transparent); }
+.ds-dialog { box-shadow: var(--shadow-panel), inset 0 1px 0 var(--color-edge-hi); }   /* è un .ds-panel con testata */
+.ds-dialog__body { flex: 1; min-height: 0; padding: 4px 22px 8px; display: flex; flex-direction: column; }
+.ds-dialog__label { margin-top: 12px; margin-bottom: 4px; }                               /* t-eyebrow c-text-2 */
+.ds-dialog__buttons { flex: none; display: flex; justify-content: flex-end; gap: 8px; padding: 8px 22px 18px; }
+
+/* ---------------- righe di lista (dentro un .ds-display) ---------------- */
+.ds-list__head { display: flex; height: 26px; align-items: center; padding: 0 8px; background: var(--color-bg-display);
+  border-bottom: 1px solid var(--color-edge-lo); color: var(--color-text-2); }
+.ds-row { display: flex; align-items: center; gap: 8px; min-height: 26px; padding: 2px 8px; color: var(--color-text); }
+.ds-row.is-alt { background: var(--color-bg-alt); }
+.ds-row:hover { background: var(--color-bg-elevated); }
+.ds-row.is-selected { background: var(--color-selected-row); }
+.ds-row.is-selected .ds-row__name { color: var(--color-accent-hover); }
+.ds-row--strong.is-selected { background: var(--color-selection); color: var(--color-on-selection); }   /* selezione piena (elenchi brevi nei dialog) */
+.ds-group { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; color: var(--color-text-2); }  /* intestazione di gruppo richiudibile, t-eyebrow */
+
+/* ---------------- barra di avanzamento ---------------- */
+.ds-progress { height: 14px; border-radius: 7px; background: var(--color-bg-0); border: 1px solid var(--color-edge-lo); overflow: hidden; }
+.ds-progress__fill { height: 100%; background: var(--gradient-accent); }
+
+/* ---------------- card di scelta (formati, preset) ---------------- */
+.ds-card { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--color-border); border-radius: var(--radius-m);
+  background: var(--color-bg-display); color: var(--color-text-2); text-align: left; }
+.ds-card:hover { border-color: var(--color-border-field-hover); }
+.ds-card.is-selected { border: 2px solid var(--color-accent); padding: 7px; box-shadow: var(--glow-accent); color: var(--color-text); }
+
+/* ---------------- finestra flottante (pannello con viti, testata trascinabile) ---------------- */
+.ds-float { position: fixed; z-index: 300; }
+.ds-float__head { cursor: grab; padding-right: 12px; }
+.ds-float__head:active { cursor: grabbing; }
+.ds-float__body { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 10px 20px 14px; }
+
+/* ---------------- vumeter a LED (colonna verticale) ---------------- */
+.ds-meter { display: flex; flex-direction: column-reverse; gap: 3px; padding: 4px; }
+.ds-led { width: 4px; height: 4px; border-radius: 50%; background: var(--color-led-off); }
+.ds-led.is-ok { background: var(--color-ok); box-shadow: 0 0 3.8px color-mix(in srgb, var(--color-ok) 27.5%, transparent); }
+.ds-led.is-yellow { background: var(--color-meter-yellow); box-shadow: 0 0 3.8px color-mix(in srgb, var(--color-meter-yellow) 27.5%, transparent); }
+.ds-led.is-red { background: var(--color-error); box-shadow: 0 0 3.8px color-mix(in srgb, var(--color-error) 27.5%, transparent); }
+
+/* ---------------- colori di categoria (es. clip in timeline) ---------------- */
+.ds-tile { border-radius: var(--radius-s); border: 1px solid var(--color-edge-lo); color: var(--color-text); padding: 4px 6px; }
+.ds-tile--1 { background: linear-gradient(180deg, var(--lbs-cat-1-top), var(--lbs-cat-1-bottom)); }
+.ds-tile--2 { background: linear-gradient(180deg, var(--lbs-cat-2-top), var(--lbs-cat-2-bottom)); }
+.ds-tile--3 { background: linear-gradient(180deg, var(--lbs-cat-3-top), var(--lbs-cat-3-bottom)); }
+.ds-tile--4 { background: linear-gradient(180deg, var(--lbs-cat-4-top), var(--lbs-cat-4-bottom)); }
+.ds-tile--5 { background: linear-gradient(180deg, var(--lbs-cat-5-top), var(--lbs-cat-5-bottom)); }
+.ds-tile.is-selected { border-color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); }

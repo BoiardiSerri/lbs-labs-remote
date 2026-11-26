@@ -82,8 +82,27 @@ def spawn_viewer(host: str | None = None, notice: str | None = None) -> None:
 
 
 def run_viewer(host: str | None, notice: str | None = None) -> None:
-    from .client import ClientApp
-    ClientApp(host, notice=notice).run()
+    from .viewer import run
+    run(host, notice)
+
+
+def ensure_autostart_first_run() -> None:
+    """App installata: al primo avvio si attiva da sola l'avvio automatico dell'agente,
+    così il computer resta sempre controllabile senza fare altro. Se poi l'utente lo
+    disattiva dal menu dell'icona, la scelta viene rispettata."""
+    if not getattr(sys, "frozen", False) or not autostart.is_supported():
+        return
+    from .config import load_json, save_json
+    state = load_json("app.json", {})
+    if state.get("autostart_configured"):
+        return
+    try:
+        if not autostart.is_enabled():
+            log.info(autostart.enable())
+        state["autostart_configured"] = True
+        save_json("app.json", state)
+    except OSError:
+        log.exception("attivazione dell'avvio automatico fallita")
 
 
 def selftest(path: str) -> None:
@@ -102,14 +121,27 @@ def selftest(path: str) -> None:
         with mss.mss() as sct:
             sct.grab(sct.monitors[1])
 
-    def tk_window():
-        import tkinter
-        root = tkinter.Tk()
-        root.update()
-        root.destroy()
+    def ui_files():
+        from .resources import STYLE_DIR, UI_DIR
+        for p in (UI_DIR / "index.html", UI_DIR / "app.js", UI_DIR / "app.css", UI_DIR / "icons.js",
+                  STYLE_DIR / "tokens" / "lbs-tokens.css", STYLE_DIR / "css" / "lbs-base.css",
+                  STYLE_DIR / "css" / "lbs-components.css", STYLE_DIR / "logo" / "lbs-logo.svg",
+                  STYLE_DIR / "font" / "BarlowSemiCondensed-SemiBold.ttf",
+                  STYLE_DIR / "icone" / "link.svg"):
+            if not p.is_file():
+                raise FileNotFoundError(str(p))
 
-    check("tkinter", tk_window)
-    check("PIL.ImageTk", lambda: __import__("PIL.ImageTk"))
+    def webview_backend():
+        import importlib
+        importlib.import_module("webview")
+        if pu.IS_MAC:
+            importlib.import_module("webview.platforms.cocoa")
+        elif pu.IS_WINDOWS:
+            importlib.import_module("webview.platforms.edgechromium")
+
+    check("interfaccia (file)", ui_files)
+    check("pywebview", webview_backend)
+    check("PIL", lambda: __import__("PIL.Image"))
     check("mss", grab)
     check("pynput", lambda: (__import__("pynput.keyboard"), __import__("pynput.mouse")))
     check("pystray", lambda: __import__("pystray").Icon)
@@ -117,7 +149,7 @@ def selftest(path: str) -> None:
         check("Quartz", lambda: __import__("Quartz").CGEventCreateMouseEvent)
         check("AppKit", lambda: __import__("AppKit").NSApplication)
         check("PyObjCTools.AppHelper", lambda: __import__("PyObjCTools.AppHelper"))
-    check("lbsremote.client", lambda: __import__("lbsremote.client"))
+    check("lbsremote.viewer", lambda: __import__("lbsremote.viewer"))
     check("lbsremote.tray", lambda: __import__("lbsremote.tray"))
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(results) + "\n")
@@ -132,18 +164,6 @@ def _mac_wrong_location() -> bool:
     return path.startswith("/Volumes/") or "/AppTranslocation/" in path
 
 
-def _show_message(title: str, text: str) -> None:
-    try:
-        import tkinter
-        from tkinter import messagebox
-        root = tkinter.Tk()
-        root.withdraw()
-        messagebox.showwarning(title, text)
-        root.destroy()
-    except Exception:
-        log.warning("%s: %s", title, text)
-
-
 def main(argv=None) -> None:
     args = parse_args(argv)
     if args.selftest:
@@ -152,10 +172,10 @@ def main(argv=None) -> None:
     from .server_main import build_settings, create_agent, run_agent_ui, setup_logging
 
     if _mac_wrong_location():
-        _show_message(APP_NAME,
-                      "To work properly, LBS Labs Remote must be copied to the Applications "
-                      "folder.\n\nDrag the LBS Labs Remote icon onto the \"Applications\" "
-                      "folder in the disk window, then open it from there.")
+        setup_logging(args.verbose, "viewer.log")
+        run_viewer(None, notice="LBS Labs Remote must be copied to the Applications folder. "
+                                "Drag its icon onto the \"Applications\" folder in the disk "
+                                "window, then open it from there.")
         return
 
     if args.install_autostart or args.uninstall_autostart:
@@ -173,6 +193,7 @@ def main(argv=None) -> None:
         return
 
     setup_logging(args.verbose, "agent.log")
+    ensure_autostart_first_run()
     pu.enable_windows_dpi_awareness()          # prima di qualunque cattura dello schermo
     server, start_error = create_agent(build_settings(args))
 
