@@ -258,6 +258,20 @@ Note:
 - Il **Mac che controlla** (solo viewer) non ha bisogno di permessi. Se però lanci l'app in modalità
   normale, l'agente parte e macOS chiede i permessi anche lì. Per evitarlo usa `--viewer`.
 
+### Se il Mac mostra uno schermo grigio e l'avviso "permission missing"
+Succede quando i permessi risultano attivi in Impostazioni di Sistema ma macOS non li considera più
+validi (accade dopo un aggiornamento fatto con versioni precedenti alla 1.2.1, la cui firma cambiava
+a ogni build). Dal menu dell'icona scegli **Reset permissions…** (compare solo se manca qualcosa),
+consenti i due permessi quando macOS li chiede, poi **Quit** e riapri l'app. In alternativa, da
+Terminale (con l'app chiusa):
+```bash
+tccutil reset ScreenCapture com.lbslabs.remote
+tccutil reset Accessibility com.lbslabs.remote
+```
+Dalla 1.2.1 l'app è firmata con un'identità stabile (`packaging/macos/lbs-labs-codesign.p12`): i
+permessi concessi restano validi anche dopo gli aggiornamenti. Il passaggio da una versione precedente
+alla 1.2.1 richiede un'ultima volta questa procedura.
+
 ---
 
 ## 6. Rete e firewall

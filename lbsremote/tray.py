@@ -111,6 +111,8 @@ class TrayApp:
                 Item("⚠ Grant \"Accessibility\" permission…",
                      lambda icon, item: pu.mac_open_privacy_pane("Accessibility"),
                      visible=missing("Accessibility")),
+                Item("⚠ Reset permissions…", self._reset_permissions,
+                     visible=lambda item: bool(self.server.permission_problems)),
             ]
         items.append(Menu.SEPARATOR)
         if autostart.is_supported():
@@ -127,6 +129,14 @@ class TrayApp:
             log.exception("modifica avvio automatico fallita")
             self.notify(f"Unable to change the start-at-login setting: {exc}")
         self._refresh()
+
+    def _reset_permissions(self, icon, item) -> None:
+        def work():
+            pu.mac_reset_permissions()
+            self.notify("Permissions reset. Allow Screen Recording and Accessibility when macOS asks, "
+                        "then choose Quit from this menu and open LBS Labs Remote again.")
+            pu.mac_open_privacy_pane("ScreenCapture")
+        threading.Thread(target=work, daemon=True).start()
 
     def _quit(self, icon, item) -> None:
         self.server.stop()

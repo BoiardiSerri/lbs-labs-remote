@@ -44,8 +44,32 @@ jobs:
         run: pyinstaller --noconfirm --clean packaging/lbs_labs_remote.spec
       - name: Verifica compatibilità Intel + Apple Silicon
         run: bash packaging/macos/check_universal.sh "dist/LBS Labs Remote.app"
-      - name: Firma ad-hoc
-        run: codesign --force --deep --sign - "dist/LBS Labs Remote.app"
+      # Firma con un'identità stabile (packaging/macos/lbs-labs-codesign.p12, nel repository privato):
+      # macOS lega i permessi "Registrazione schermo" e "Accessibilità" alla firma dell'app. Con la firma
+      # "ad-hoc" cambiava a ogni build e i permessi concessi a una versione non valevano per la successiva.
+      - name: Firma con l'identità stabile LBS Labs
+        run: |
+          APP="dist/LBS Labs Remote.app"
+          KC="$RUNNER_TEMP/lbs-sign.keychain-db"
+          security create-keychain -p ci "$KC"
+          security set-keychain-settings -lut 21600 "$KC"
+          security unlock-keychain -p ci "$KC"
+          security import packaging/macos/lbs-labs-codesign.p12 -k "$KC" -P lbslabsremote -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k ci "$KC" > /dev/null
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          security find-identity -p codesigning "$KC"
+          HASH=$(security find-identity -p codesigning "$KC" | grep "LBS Labs Remote Code Signing" | head -1 | awk '{print $2}')
+          test -n "$HASH"
+          codesign --force --deep --sign "$HASH" --keychain "$KC" "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -dvv "$APP" 2>&1 | grep -E "Identifier|Authority|Signature|TeamIdentifier"
+          echo "--- requisito di firma:"
+          REQ=$(codesign -d -r- "$APP" 2>&1 | grep designated)
+          echo "$REQ"
+          # deve dipendere dall'identificativo e dal certificato, non da un hash del codice (che cambia a ogni build)
+          echo "$REQ" | grep -q 'certificate leaf' || { echo "ERRORE: firma non stabile"; exit 1; }
+          echo "$REQ" | grep -q 'cdhash' && { echo "ERRORE: la firma dipende dall'hash del codice"; exit 1; }
+          echo "firma stabile OK"
       - name: Autotest dell'app impacchettata (Intel)
         run: |
           "dist/LBS Labs Remote.app/Contents/MacOS/LBSLabsRemote" --selftest selftest.txt || (cat selftest.txt; exit 1)

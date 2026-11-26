@@ -13,6 +13,7 @@ import sys
 log = logging.getLogger(__name__)
 
 IS_MAC = sys.platform == "darwin"
+MAC_BUNDLE_ID = "com.lbslabs.remote"       # identificativo dell'app (packaging/lbs_labs_remote.spec)
 IS_WINDOWS = sys.platform.startswith("win")
 
 
@@ -111,13 +112,33 @@ def permission_problems(prompt: bool = False) -> list[str]:
         problems.append(
             "\"Screen Recording\" permission missing on the remote Mac: the screen will look "
             "empty or show only the wallpaper. Grant it in System Settings > Privacy & "
-            "Security > Screen Recording, then quit and reopen LBS Labs Remote.")
+            "Security > Screen Recording, then quit and reopen LBS Labs Remote. If it already shows "
+            "ON (it can go stale after an update), use the menu bar icon > Reset permissions.")
     if mac_has_accessibility(prompt=prompt) is False:
         problems.append(
             "\"Accessibility\" permission missing on the remote Mac: mouse and keyboard "
             "will have no effect. Grant it in System Settings > Privacy & Security > "
-            "Accessibility, then quit and reopen LBS Labs Remote.")
+            "Accessibility, then quit and reopen LBS Labs Remote. If it already shows ON (it can go "
+            "stale after an update), use the menu bar icon > Reset permissions.")
     return problems
+
+
+def mac_reset_permissions() -> None:
+    """Cancella i permessi "Registrazione schermo" e "Accessibilità" di questa app e li richiede di nuovo.
+
+    Serve quando l'interruttore in Impostazioni di Sistema è attivo ma macOS non lo considera più
+    valido: succede dopo un aggiornamento dell'app con una firma diversa.
+    """
+    if not IS_MAC:
+        return
+    for service in ("ScreenCapture", "Accessibility"):
+        try:
+            subprocess.run(["/usr/bin/tccutil", "reset", service, MAC_BUNDLE_ID],
+                           check=False, timeout=20, capture_output=True)
+        except (OSError, subprocess.SubprocessError):
+            log.warning("tccutil reset %s fallito", service, exc_info=True)
+    mac_request_screen_recording()
+    mac_has_accessibility(prompt=True)
 
 
 # --- notifiche ---------------------------------------------------------------

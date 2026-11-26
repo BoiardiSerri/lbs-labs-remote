@@ -132,6 +132,7 @@ class ClientSession:
                     idx = 1
                 self.monitor_geom = dict(sct.monitors[idx])
 
+            self.server.check_permissions(prompt=False)    # i permessi possono essere cambiati dopo l'avvio
             warnings = list(self.server.permission_problems)
             try:
                 from .injector import InputInjector
@@ -365,6 +366,8 @@ class AgentServer:
         self._listen_sock = s
         self.error = None
         threading.Thread(target=self._accept_loop, name="accept", daemon=True).start()
+        if pu.IS_MAC:
+            threading.Thread(target=self._watch_permissions, name="permissions", daemon=True).start()
         if self.settings.announce:
             self._announcer = Announcer(self.settings.port, self.settings.discovery_port,
                                         is_busy=lambda: self.status()["client"] is not None)
@@ -372,6 +375,17 @@ class AgentServer:
         log.info("in ascolto sulla porta TCP %d (discovery UDP %d)",
                  self.settings.port, self.settings.discovery_port)
         self._notify_status()
+
+    def _watch_permissions(self) -> None:
+        """Finché mancano dei permessi macOS li ricontrolla: appena concessi l'icona torna normale."""
+        while not self._stopping:
+            time.sleep(5)
+            if not self.permission_problems:
+                continue
+            now = pu.permission_problems(prompt=False)
+            if now != self.permission_problems:
+                self.permission_problems = now
+                self._notify_status()
 
     def stop(self) -> None:
         self._stopping = True
