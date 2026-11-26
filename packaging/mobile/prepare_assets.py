@@ -75,6 +75,15 @@ def ios() -> None:
     flat = Image.new("RGB", icon.size, tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)))
     flat.paste(icon, (0, 0), icon)
     flat.save(base / "Assets.xcassets" / "AppIcon.appiconset" / "icon-1024.png")
+    # colore della schermata di avvio dai token
+    h = TOKENS["bg-window"].lstrip("#")
+    r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    colorset = base / "Assets.xcassets" / "LaunchBackground.colorset"
+    colorset.mkdir(parents=True, exist_ok=True)
+    (colorset / "Contents.json").write_text(json.dumps({
+        "colors": [{"idiom": "universal", "color": {"color-space": "srgb", "components": {
+            "red": f"{r:.4f}", "green": f"{g:.4f}", "blue": f"{b:.4f}", "alpha": "1.000"}}}],
+        "info": {"author": "xcode", "version": 1}}, indent=2) + "\n", encoding="utf-8")
     # colori del codice Swift dai token
     gen = base / "Generated"
     gen.mkdir(exist_ok=True)

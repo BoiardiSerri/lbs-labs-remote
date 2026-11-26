@@ -197,11 +197,82 @@ jobs:
         if: always()
         run: cat fake_agent.log | tail -30
 
+  # ------------------------------------------------------------------ iPad / iPhone (.ipa non firmato)
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Interfaccia e stile LBS nell'app
+        run: |
+          python -m pip install pillow
+          python packaging/mobile/prepare_assets.py ios
+      - name: Progetto Xcode (XcodeGen)
+        run: |
+          brew install xcodegen
+          export APP_VERSION=$(python -c "import re; print(re.search(r'__version__ = \"([^\"]+)\"', open('lbsremote/__init__.py').read()).group(1))")
+          export BUILD_NUMBER=${{ github.run_number }}
+          cd ios && xcodegen generate
+      - name: Compila per iPad e iPhone (senza firma)
+        run: |
+          set -o pipefail
+          cd ios
+          xcodebuild -project LBSLabsRemote.xcodeproj -scheme LBSLabsRemote -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build | tee build.log | tail -60
+      - name: Crea il file .ipa e controlla il contenuto
+        run: |
+          APP=ios/build/Build/Products/Release-iphoneos/LBSLabsRemote.app
+          plutil -p "$APP/Info.plist" | grep -E "CFBundleIdentifier|CFBundleShortVersionString|CFBundleDisplayName|NSLocalNetwork|MinimumOSVersion|UIDeviceFamily" 
+          ls "$APP/www" "$APP/www/lbs"
+          test -f "$APP/www/lbs/font/BarlowSemiCondensed-SemiBold.ttf"
+          rm -rf Payload && mkdir Payload && cp -R "$APP" Payload/
+          zip -qry LBS-Labs-Remote-iPad.ipa Payload
+          ls -la LBS-Labs-Remote-iPad.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LBS-Labs-Remote-iPad
+          path: LBS-Labs-Remote-iPad.ipa
+
+  # Prova sul simulatore iPad: l'app si collega all'agente di prova, riceve i frame e invia un clic.
+  # Non blocca la pubblicazione.
+  ios-simulator:
+    runs-on: macos-15
+    timeout-minutes: 40
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Interfaccia, progetto e compilazione per il simulatore
+        run: |
+          set -o pipefail
+          python -m pip install pillow
+          python packaging/mobile/prepare_assets.py ios
+          brew install xcodegen
+          export APP_VERSION=0.0.0 BUILD_NUMBER=1
+          cd ios && xcodegen generate
+          xcodebuild -project LBSLabsRemote.xcodeproj -scheme LBSLabsRemote -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO build | tail -20
+      - name: Agente di prova
+        run: |
+          python tools/fake_agent.py --port 5970 --seconds 600 > fake_agent.log 2>&1 &
+          sleep 2; cat fake_agent.log
+      - name: Prova sul simulatore
+        run: bash tools/ios_e2e.sh ios/build/Build/Products/Debug-iphonesimulator/LBSLabsRemote.app fake_agent.log
+      - name: Esito
+        if: always()
+        run: tail -30 fake_agent.log
+
   # Pubblica i file nella pagina Releases del repository (scaricabili dal browser)
   release:
-    needs: [macos, windows, android]
+    needs: [macos, windows, android, ios]
     # si pubblica solo da main e solo se tutti i pacchetti sono riusciti: mai una versione a metà
-    if: ${{ github.ref == 'refs/heads/main' && needs.macos.result == 'success' && needs.windows.result == 'success' && needs.android.result == 'success' }}
+    if: ${{ github.ref == 'refs/heads/main' && needs.macos.result == 'success' && needs.windows.result == 'success' && needs.android.result == 'success' && needs.ios.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

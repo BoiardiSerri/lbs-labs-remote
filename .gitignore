@@ -21,3 +21,5 @@ ios/App/Generated/
 ios/App/Assets.xcassets/AppIcon.appiconset/icon-1024.png
 ios/*.xcodeproj/
 ios/build/
+ios/App/Assets.xcassets/LaunchBackground.colorset/
+ios/Config/

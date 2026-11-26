@@ -1,0 +1,63 @@
+# Progetto Xcode generato con XcodeGen (brew install xcodegen): xcodegen generate
+# Le variabili d'ambiente APP_VERSION e BUILD_NUMBER vengono impostate dal workflow.
+name: LBSLabsRemote
+options:
+  bundleIdPrefix: com.lbslabs
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: ${APP_VERSION}
+    CURRENT_PROJECT_VERSION: ${BUILD_NUMBER}
+    TARGETED_DEVICE_FAMILY: "1,2"
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+targets:
+  LBSLabsRemote:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes:
+          - "www"
+      - path: App/www
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lbslabs.remote
+        PRODUCT_NAME: LBSLabsRemote
+        INFOPLIST_KEY_CFBundleDisplayName: LBS Labs Remote
+    info:
+      path: Config/Info.plist
+      properties:
+        CFBundleDisplayName: LBS Labs Remote
+        CFBundleName: LBS Labs Remote
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIViewControllerBasedStatusBarAppearance: true
+        UIRequiresFullScreen: false
+        ITSAppUsesNonExemptEncryption: false
+        NSLocalNetworkUsageDescription: LBS Labs Remote connects to computers on your local network to show and control their screens.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+schemes:
+  LBSLabsRemote:
+    build:
+      targets:
+        LBSLabsRemote: all
+    run:
+      config: Debug
+    archive:
+      config: Release
