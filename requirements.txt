@@ -1,0 +1,8 @@
+# RemoteLAN - dipendenze (Python 3.9+)
+mss>=9.0          # cattura schermo (server)
+Pillow>=10.0      # codifica/decodifica JPEG, icona tray, visualizzazione (server + client)
+pynput>=1.7.6     # iniezione mouse/tastiera (server)
+pystray>=0.19.5   # icona nella system tray / menu bar (server)
+# tkinter (client) fa parte della libreria standard di Python:
+#  - Windows / python.org per macOS: già incluso
+#  - Homebrew su macOS: brew install python-tk

@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+build/
+dist/
+packaging/icons/
+packaging/windows/Output/
+*.dmg
+selftest.txt
