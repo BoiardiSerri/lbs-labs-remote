@@ -10,6 +10,8 @@ from __future__ import annotations
 import logging
 import sys
 
+from .mainthread import post_to_main, run_on_main
+
 log = logging.getLogger(__name__)
 
 
@@ -73,7 +75,8 @@ class InputInjector:
         self.monitor = monitor
         self._Key = keyboard.Key
         self._Button = mouse.Button
-        self.kb = keyboard.Controller()
+        # macOS: la tastiera di pynput va creata e usata dal thread principale (vedi mainthread.py)
+        self.kb = run_on_main(keyboard.Controller)
         self.mouse = mouse.Controller()
         self.quartz = None
         if sys.platform == "darwin":
@@ -115,6 +118,9 @@ class InputInjector:
             return char
         return None
 
+    def _kb(self, fn, *args) -> None:
+        post_to_main(fn, *args)
+
     # --- API ---
     def handle(self, ev: dict) -> None:
         kind = ev.get("t")
@@ -149,17 +155,17 @@ class InputInjector:
                 return
             ident = ev.get("s") or ev.get("c")
             if ev.get("d"):
-                self.kb.press(key)
+                self._kb(self.kb.press, key)
                 self.keys_down[ident] = key
             else:
-                self.kb.release(key)
+                self._kb(self.kb.release, key)
                 self.keys_down.pop(ident, None)
 
     def release_all(self) -> None:
         """Rilascia tasti e pulsanti rimasti premuti (es. connessione caduta con Ctrl premuto)."""
         for ident, key in list(self.keys_down.items()):
             try:
-                self.kb.release(key)
+                self._kb(self.kb.release, key)
             except Exception:
                 pass
         self.keys_down.clear()

@@ -56,6 +56,13 @@ def create_agent(settings: ServerSettings) -> tuple[AgentServer, str | None]:
     """Crea e avvia l'agente. Restituisce (agente, errore di avvio o None)."""
     log.info("%s %s – agente avviato (%s)", APP_NAME, __version__, sys.platform)
     server = AgentServer(settings)
+    if sys.platform == "darwin":
+        try:   # macOS: pynput si importa sul thread principale (le sessioni girano in altri thread)
+            import importlib
+            importlib.import_module("pynput.keyboard")
+            importlib.import_module("pynput.mouse")
+        except Exception:
+            log.warning("pynput non disponibile", exc_info=True)
     server.check_permissions(prompt=True)
     try:
         server.start()
