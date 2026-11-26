@@ -42,18 +42,8 @@ jobs:
         run: python packaging/build_icons.py
       - name: PyInstaller (universal2)
         run: pyinstaller --noconfirm --clean packaging/lbs_labs_remote.spec
-      - name: Verifica che ogni componente contenga Intel e Apple Silicon
-        run: |
-          bad=0; n=0
-          while IFS= read -r -d '' f; do
-            if file "$f" | grep -q "Mach-O"; then
-              n=$((n+1)); a=$(lipo -archs "$f" 2>/dev/null || echo "?")
-              case " $a " in *" x86_64 "*) ;; *) echo "manca x86_64: $f ($a)"; bad=1;; esac
-              case " $a " in *" arm64 "*) ;; *) echo "manca arm64: $f ($a)"; bad=1;; esac
-            fi
-          done < <(find "dist/LBS Labs Remote.app" -type f -print0)
-          echo "componenti binari controllati: $n"
-          exit $bad
+      - name: Verifica compatibilità Intel + Apple Silicon
+        run: bash packaging/macos/check_universal.sh "dist/LBS Labs Remote.app"
       - name: Firma ad-hoc
         run: codesign --force --deep --sign - "dist/LBS Labs Remote.app"
       - name: Autotest dell'app impacchettata (Intel)
