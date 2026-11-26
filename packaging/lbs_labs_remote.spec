@@ -57,6 +57,8 @@ exe = EXE(
     exclude_binaries=True,
     name="LBSLabsRemote",
     console=False,          # nessuna finestra console
+    # macOS: LBS_TARGET_ARCH=universal2 crea un'app Universale (Intel + Apple Silicon)
+    target_arch=os.environ.get("LBS_TARGET_ARCH") or None,
     icon=icon,
     version=version_info,
 )

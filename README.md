@@ -13,8 +13,8 @@ e controllarne altri.
 
 Non serve installare Python: usa i pacchetti pronti.
 
-### Mac — `LBS-Labs-Remote-macOS-AppleSilicon.dmg` (chip M1/M2/M3/M4) o `LBS-Labs-Remote-macOS-Intel.dmg`
-(Per sapere quale:  → *Informazioni su questo Mac*: "Chip Apple" oppure "Processore Intel".)
+### Mac — `LBS-Labs-Remote-macOS.dmg`
+(App Universale: un solo file per tutti i Mac, nativa sia su chip Apple M1/M2/M3/M4 sia su Intel.)
 1. Doppio clic sul file `.dmg`, poi trascina **LBS Labs Remote** sulla cartella **Applicazioni**.
 2. Apri **Applicazioni** e fai doppio clic su **LBS Labs Remote**. La prima volta il Mac dice che non
    può verificare l'app (non viene dall'App Store): clicca *Fine*, poi vai in
@@ -36,8 +36,8 @@ apre l'app LBS Labs Remote; il PC da controllare può semplicemente restare con 
 
 ### Come vengono creati i pacchetti
 Il workflow `.github/workflows/build.yml` li costruisce automaticamente su GitHub Actions
-(Mac Apple Silicon, Mac Intel e Windows) a ogni push sul ramo `main`; i file si scaricano dalla
-pagina *Actions* del repository, sezione *Artifacts*. In locale, sulla piattaforma di destinazione:
+(Mac Universale e Windows) a ogni push sul ramo `main`; i file vengono pubblicati nella
+pagina *Releases* del repository. In locale, sulla piattaforma di destinazione:
 ```bash
 pip install -r requirements.txt pyinstaller
 python packaging/build_icons.py

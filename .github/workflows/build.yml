@@ -9,39 +9,82 @@ permissions:
   contents: write   # per pubblicare i file nella pagina "Releases"
 
 jobs:
+  # Un'unica app Universale (Intel + Apple Silicon nativo), costruita sul Mac Intel di GitHub
   macos:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: macos-latest      # Mac con chip Apple (M1/M2/M3/M4)
-            arch: AppleSilicon
-          - runner: macos-15-intel    # Mac con processore Intel
-            arch: Intel
-    runs-on: ${{ matrix.runner }}
+    runs-on: macos-15-intel
+    env:
+      PYVER: "3.12.10"     # ultimo Python 3.12 con installer Universale ufficiale
+      LBS_TARGET_ARCH: universal2
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      - name: Python Universale (python.org)
+        run: |
+          curl -fsSL -o python.pkg "https://www.python.org/ftp/python/${PYVER}/python-${PYVER}-macos11.pkg"
+          sudo installer -pkg python.pkg -target /
+          PY="/Library/Frameworks/Python.framework/Versions/3.12/bin/python3.12"
+          lipo -archs "$(dirname "$(readlink -f "$PY")")/../Resources/Python.app/Contents/MacOS/Python" || true
+          "$PY" -m venv venv
+          echo "$PWD/venv/bin" >> "$GITHUB_PATH"
+      - name: Pillow Universale (fusione delle versioni Intel e Apple Silicon)
+        run: |
+          python -m pip install --upgrade pip delocate
+          COMMON="--only-binary=:all: --no-deps --python-version 3.12 --implementation cp --abi cp312"
+          python -m pip download pillow $COMMON -d wh/x86 \
+            --platform macosx_10_13_x86_64 --platform macosx_10_15_x86_64 --platform macosx_11_0_x86_64
+          VER=$(ls wh/x86 | sed -E 's/^pillow-([^-]+)-.*/\1/')
+          python -m pip download "pillow==$VER" $COMMON -d wh/arm --platform macosx_11_0_arm64
+          delocate-merge wh/x86/*.whl wh/arm/*.whl -w wh/fused
+          ls wh/fused
+          python -m pip install wh/fused/*.whl
       - name: Dipendenze
         run: python -m pip install -r requirements.txt pyinstaller
       - name: Icone
         run: python packaging/build_icons.py
-      - name: PyInstaller
+      - name: PyInstaller (universal2)
         run: pyinstaller --noconfirm --clean packaging/lbs_labs_remote.spec
+      - name: Verifica che ogni componente contenga Intel e Apple Silicon
+        run: |
+          bad=0; n=0
+          while IFS= read -r -d '' f; do
+            if file "$f" | grep -q "Mach-O"; then
+              n=$((n+1)); a=$(lipo -archs "$f" 2>/dev/null || echo "?")
+              case " $a " in *" x86_64 "*) ;; *) echo "manca x86_64: $f ($a)"; bad=1;; esac
+              case " $a " in *" arm64 "*) ;; *) echo "manca arm64: $f ($a)"; bad=1;; esac
+            fi
+          done < <(find "dist/LBS Labs Remote.app" -type f -print0)
+          echo "componenti binari controllati: $n"
+          exit $bad
       - name: Firma ad-hoc
         run: codesign --force --deep --sign - "dist/LBS Labs Remote.app"
-      - name: Autotest dell'app impacchettata
+      - name: Autotest dell'app impacchettata (Intel)
         run: |
           "dist/LBS Labs Remote.app/Contents/MacOS/LBSLabsRemote" --selftest selftest.txt || (cat selftest.txt; exit 1)
           cat selftest.txt
       - name: DMG
-        run: bash packaging/macos/make_dmg.sh "LBS-Labs-Remote-macOS-${{ matrix.arch }}.dmg"
+        run: bash packaging/macos/make_dmg.sh "LBS-Labs-Remote-macOS.dmg"
       - uses: actions/upload-artifact@v4
         with:
-          name: LBS-Labs-Remote-macOS-${{ matrix.arch }}
-          path: LBS-Labs-Remote-macOS-${{ matrix.arch }}.dmg
+          name: LBS-Labs-Remote-macOS
+          path: LBS-Labs-Remote-macOS.dmg
+
+  # Verifica facoltativa su un Mac con chip Apple: se GitHub non ne ha di disponibili
+  # viene saltata senza bloccare la pubblicazione.
+  verify-apple-silicon:
+    needs: macos
+    runs-on: macos-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: LBS-Labs-Remote-macOS
+      - name: Autotest nativo Apple Silicon
+        run: |
+          uname -m
+          hdiutil attach LBS-Labs-Remote-macOS.dmg -mountpoint /tmp/lbs -nobrowse
+          cp -R "/tmp/lbs/LBS Labs Remote.app" /tmp/
+          "/tmp/LBS Labs Remote.app/Contents/MacOS/LBSLabsRemote" --selftest selftest.txt || (cat selftest.txt; exit 1)
+          cat selftest.txt
 
   windows:
     runs-on: windows-latest
@@ -94,8 +137,7 @@ jobs:
           TAG="v$VERSION"
           ls -la artifacts
           NOTES="Scarica il file per il tuo computer:
-          - Mac con chip Apple (M1/M2/M3/M4): LBS-Labs-Remote-macOS-AppleSilicon.dmg
-          - Mac con processore Intel: LBS-Labs-Remote-macOS-Intel.dmg
+          - Mac (tutti: chip Apple M1/M2/M3/M4 e Intel, app Universale): LBS-Labs-Remote-macOS.dmg
           - Windows: LBS-Labs-Remote-Windows-Setup.exe
 
           Build del $(date -u '+%d/%m/%Y %H:%M') UTC (commit ${GITHUB_SHA::7})."
@@ -105,3 +147,7 @@ jobs:
             gh release create "$TAG" --title "LBS Labs Remote $VERSION" --notes "$NOTES"
           fi
           gh release upload "$TAG" artifacts/* --clobber
+          # rimuove file di versioni precedenti che non esistono più
+          for old in $(gh release view "$TAG" --json assets -q '.assets[].name'); do
+            [ -e "artifacts/$old" ] || gh release delete-asset "$TAG" "$old" -y
+          done
