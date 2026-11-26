@@ -80,6 +80,9 @@ final class AppCore {
             return "null"
         case "get_servers":
             return "[]"                                   // niente ricerca automatica su iOS (serve un permesso speciale di Apple)
+        case "log":                                       // diagnostica dell'interfaccia (prove automatiche)
+            NSLog("LBS ui: %@", args.first as? String ?? "")
+            return "null"
         case "set_fullscreen":
             host.setFullscreen((args.first as? Bool) ?? false)
             return "null"

@@ -14,6 +14,9 @@ for i in $(seq 1 40); do
 done
 adb logcat -d -s LBS:I | tail -10
 [ $ok = 1 ] || { echo "E2E FAIL: nessun frame ricevuto"; adb logcat -d | tail -40; exit 1; }
+for i in $(seq 1 15); do adb logcat -d -s LBS:I | grep -q "frame displayed" && break; sleep 1; done
+adb logcat -d -s LBS:I | grep -q "frame displayed" || { echo "E2E FAIL: la pagina non mostra i frame"; adb logcat -d | tail -40; exit 1; }
+echo "la pagina mostra i frame: $(adb logcat -d -s LBS:I | grep 'frame displayed' | head -1)"
 sleep 3
 adb exec-out screencap -p > e2e_screen.png || true
 SIZE=$(adb shell wm size | tail -1 | sed 's/.*: //')

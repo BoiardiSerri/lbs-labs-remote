@@ -27,6 +27,7 @@ const S = {
   frameSeq: 0,
   frameLoopId: 0,
   frameUrl: null,
+  frameShown: false,        // il primo frame mostrato viene segnalato all'app nativa (diagnostica)
   serversSig: '',
 }
 
@@ -137,6 +138,7 @@ function showConnectScreen() {
   document.body.className = document.body.className.replace(/\bmode-\w+/g, '').trim() + ' mode-connect'
   document.body.classList.remove('is-fullscreen')
   S.fullscreen = false
+  S.frameShown = false
   $('screen-connect').classList.remove('hidden')
   $('screen-remote').classList.add('hidden')
   for (const id of ['docname', 'chip-conn', 'chip-control', 'btn-fullscreen', 'btn-disconnect', 'btn-keyboard']) $(id).classList.add('hidden')
@@ -216,6 +218,10 @@ function startFrameLoop() {
           if (id !== S.frameLoopId) { URL.revokeObjectURL(url); break }
           img.src = url
           $('remote-empty').classList.add('hidden')
+          if (!S.frameShown) {
+            S.frameShown = true
+            if (typeof S.api.log === 'function') S.api.log(`frame displayed ${pre.naturalWidth}x${pre.naturalHeight}`)
+          }
           if (S.frameUrl) URL.revokeObjectURL(S.frameUrl)
           S.frameUrl = url
         } else if (r.status !== 204) {

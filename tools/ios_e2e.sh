@@ -14,7 +14,10 @@ nohup xcrun simctl launch --console "$UDID" com.lbslabs.remote -LBSConnect 127.0
 for i in $(seq 1 60); do grep -q "first frame" ios_console.log && break; sleep 1; done
 tail -15 ios_console.log
 grep -q "first frame" ios_console.log || { echo "E2E FAIL: nessun frame ricevuto"; exit 1; }
-sleep 4
+for i in $(seq 1 15); do grep -q "frame displayed" ios_console.log && break; sleep 1; done
+grep -q "frame displayed" ios_console.log || { echo "E2E FAIL: la pagina non mostra i frame"; tail -20 ios_console.log; exit 1; }
+echo "la pagina mostra i frame: $(grep 'frame displayed' ios_console.log | head -1)"
+sleep 2
 xcrun simctl io "$UDID" screenshot ios_screen.png || true
 if grep -q "INPUT.*'btn'" "$AGENT_LOG" && grep -q "INPUT.*'key'" "$AGENT_LOG"; then
   echo "E2E PASS: clic e tasto arrivati all'agente"; grep INPUT "$AGENT_LOG" | head -6; exit 0

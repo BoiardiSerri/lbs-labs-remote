@@ -41,6 +41,7 @@
       get_servers: () => call('get_servers'),
       set_fullscreen: (on) => call('set_fullscreen', [on]),
       set_capture: (active) => call('set_capture', [active]),
+      log: (message) => call('log', [message]),
     },
   }
 })()

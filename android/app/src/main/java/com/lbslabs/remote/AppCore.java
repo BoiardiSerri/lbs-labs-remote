@@ -146,6 +146,9 @@ public final class AppCore implements NetSession.Listener {
                     return "null";
                 case "set_capture":
                     return "null";
+                case "log":                                    // diagnostica dell'interfaccia (prove automatiche)
+                    host.log("ui: " + args.optString(0));
+                    return "null";
                 default:
                     return "null";
             }
