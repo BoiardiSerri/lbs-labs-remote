@@ -121,3 +121,10 @@ body.is-touch.is-fullscreen .exit-fs { display: inline-flex; }
 
 /* nello schermo remoto del tablet la barra mostra il nome del computer al posto del titolo */
 body.is-mobile.mode-remote .ds-wordmark { display: none; }
+
+/* ======================= procedura guidata dei permessi (Mac) ======================= */
+.perm-panel { margin-bottom: var(--space-4); }
+.perm-intro { margin: var(--space-1) 0 var(--space-2); }
+.perm-list { padding: var(--space-1) 0; }
+.perm-list .ds-row .ds-btn { visibility: visible; }
+.perm-actions { display: flex; justify-content: flex-end; margin-top: var(--space-2); }

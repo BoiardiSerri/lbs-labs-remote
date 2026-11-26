@@ -43,6 +43,8 @@ targets:
         UIRequiresFullScreen: false
         ITSAppUsesNonExemptEncryption: false
         NSLocalNetworkUsageDescription: LBS Labs Remote connects to computers on your local network to show and control their screens.
+        NSBonjourServices:
+          - _lbsremote._tcp
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft

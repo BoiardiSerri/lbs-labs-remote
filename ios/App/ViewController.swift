@@ -7,6 +7,7 @@ import WebKit
 final class ViewController: UIViewController, WKScriptMessageHandlerWithReply, WKURLSchemeHandler, WKNavigationDelegate, CoreHost {
     private var webView: WKWebView!
     private var core: AppCore!
+    private let localNetwork = LocalNetworkPermission()
     private var fullscreen = false
     // una sola coda: l'ordine degli input (pressione/rilascio) deve essere rispettato
     private let calls = DispatchQueue(label: "lbs.calls")
@@ -43,6 +44,8 @@ final class ViewController: UIViewController, WKScriptMessageHandlerWithReply, W
         core = AppCore(host: self, version: version,
                        connectNow: defaults.string(forKey: "LBSConnect") ?? "",
                        selfTest: defaults.bool(forKey: "LBSSelfTest"))
+        localNetwork.onDenied = { [weak self] in self?.core.localNetworkDenied = true }
+        localNetwork.request()
         webView.load(URLRequest(url: URL(string: "lbs://app/index.html")!))
     }
 

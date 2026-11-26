@@ -171,6 +171,25 @@ class Api:
     def set_capture(self, active):
         self._viewer.capture_active = bool(active)
 
+    # --- permessi di macOS (procedura guidata nella schermata iniziale) ---
+    def get_permissions(self):
+        return pu.mac_permission_status()
+
+    def request_permission(self, kind):
+        """Mostra la richiesta di sistema e apre la pagina giusta di Impostazioni di Sistema."""
+        if kind == "screen":
+            pu.mac_request_screen_recording()
+            pu.mac_open_privacy_pane("ScreenCapture")
+        elif kind == "accessibility":
+            pu.mac_has_accessibility(prompt=True)
+            pu.mac_open_privacy_pane("Accessibility")
+        elif kind == "local_network":
+            pu.mac_trigger_local_network()
+            pu.mac_open_privacy_pane("LocalNetwork")
+
+    def restart_app(self):
+        return pu.mac_relaunch()
+
 
 # =============================================================================
 # applicazione
@@ -236,6 +255,7 @@ class ViewerApp:
                                        + self.notice),
             "agent": self.agent_state,
             "mac_cmd_monitor": self.mac_cmd_monitor,
+            "permissions": pu.mac_permission_status(),
             "connect_now": self.initial_host or "",
             "session": ({"host": s.host, "hello": s.hello, "state": "connected"}
                         if s is not None and s.hello else None),

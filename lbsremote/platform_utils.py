@@ -7,6 +7,10 @@ from __future__ import annotations
 
 import ctypes
 import logging
+import os
+import shlex
+import signal
+import socket
 import subprocess
 import sys
 
@@ -91,7 +95,7 @@ def mac_has_accessibility(prompt: bool = False) -> bool | None:
 
 
 def mac_open_privacy_pane(pane: str) -> None:
-    """pane: "ScreenCapture" oppure "Accessibility"."""
+    """pane: "ScreenCapture", "Accessibility" oppure "LocalNetwork"."""
     if not IS_MAC:
         return
     url = f"x-apple.systempreferences:com.apple.preference.security?Privacy_{pane}"
@@ -99,6 +103,60 @@ def mac_open_privacy_pane(pane: str) -> None:
         subprocess.Popen(["open", url])
     except OSError:
         log.warning("impossibile aprire Impostazioni di Sistema")
+
+
+def mac_permission_status() -> dict:
+    """Stato dei permessi per la procedura guidata dell'interfaccia (True/False, None se non verificabile)."""
+    if not IS_MAC:
+        return {"supported": False}
+    return {"supported": True, "screen": mac_has_screen_recording(), "accessibility": mac_has_accessibility()}
+
+
+def mac_trigger_local_network() -> None:
+    """Fa comparire la richiesta "Rete locale" di macOS 15+, che scatta alla prima comunicazione in LAN."""
+    if not IS_MAC:
+        return
+    targets = {"255.255.255.255"}
+    try:
+        from .discovery import local_ipv4_addresses
+        for ip in local_ipv4_addresses():
+            targets.add(".".join(ip.split(".")[:3] + ["255"]))
+    except Exception:
+        log.debug("indirizzi locali non disponibili", exc_info=True)
+    for dest in targets:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                s.sendto(b"lbs-local-network", (dest, 5901))
+        except OSError:
+            pass
+
+
+def mac_app_bundle() -> str | None:
+    """Percorso di "LBS Labs Remote.app" quando l'app gira impacchettata."""
+    exe = sys.executable
+    i = exe.find(".app/Contents/MacOS/")
+    return exe[:i + 4] if IS_MAC and getattr(sys, "frozen", False) and i > 0 else None
+
+
+def mac_relaunch() -> bool:
+    """Chiude tutti i processi dell'app (agente e finestre) e la riapre: serve dopo aver concesso
+    "Registrazione schermo", che macOS applica solo ai processi avviati dopo."""
+    app = mac_app_bundle()
+    if app is None:
+        return False
+    subprocess.Popen(["/bin/sh", "-c", f"sleep 2; /usr/bin/open -n {shlex.quote(app)}"],
+                     start_new_session=True, close_fds=True)
+    me = os.getpid()
+    try:
+        out = subprocess.run(["/usr/bin/pgrep", "-x", "LBSLabsRemote"], capture_output=True,
+                             text=True, timeout=5).stdout.split()
+        for pid in out:
+            if pid.isdigit() and int(pid) != me:
+                os.kill(int(pid), signal.SIGTERM)
+    except (OSError, subprocess.SubprocessError):
+        log.debug("chiusura degli altri processi fallita", exc_info=True)
+    os._exit(0)
 
 
 def permission_problems(prompt: bool = False) -> list[str]:
@@ -139,6 +197,7 @@ def mac_reset_permissions() -> None:
             log.warning("tccutil reset %s fallito", service, exc_info=True)
     mac_request_screen_recording()
     mac_has_accessibility(prompt=True)
+    mac_trigger_local_network()
 
 
 # --- notifiche ---------------------------------------------------------------

@@ -88,6 +88,9 @@ if sys.platform == "darwin":
             "CFBundleShortVersionString": VERSION,
             "CFBundleVersion": VERSION,
             "NSHighResolutionCapable": True,
+            # testo mostrato da macOS nella richiesta "Rete locale" (macOS 15+)
+            "NSLocalNetworkUsageDescription": "LBS Labs Remote lets other computers on your network see and "
+                                              "control this Mac, and connects to other computers on your network.",
             # la finestra carica l'interfaccia dal server locale http://127.0.0.1
             "NSAppTransportSecurity": {"NSAllowsLocalNetworking": True, "NSAllowsArbitraryLoads": True},
             "LSMinimumSystemVersion": "11.0",

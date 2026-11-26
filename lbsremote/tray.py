@@ -105,6 +105,8 @@ class TrayApp:
         ]
         if pu.IS_MAC:
             items += [
+                Item("⚠ Set up permissions…", lambda icon, item: self.open_viewer() if self.open_viewer else None,
+                     visible=lambda item: bool(self.server.permission_problems)),
                 Item("⚠ Grant \"Screen Recording\" permission…",
                      lambda icon, item: pu.mac_open_privacy_pane("ScreenCapture"),
                      visible=missing("Screen Recording")),

@@ -60,15 +60,19 @@ jobs:
           security find-identity -p codesigning "$KC"
           HASH=$(security find-identity -p codesigning "$KC" | grep "LBS Labs Remote Code Signing" | head -1 | awk '{print $2}')
           test -n "$HASH"
+          # 1) tutti i componenti interni con l'identità stabile
           codesign --force --deep --sign "$HASH" --keychain "$KC" "$APP"
+          # 2) l'app esterna con un requisito che dipende SOLO dall'identificativo: macOS lo salva con i permessi
+          #    concessi e li riconosce in ogni versione futura, anche se cambia il contenuto della build
+          codesign --force --sign "$HASH" --keychain "$KC" \
+            --requirements '=designated => identifier "com.lbslabs.remote"' "$APP"
           codesign --verify --deep --strict --verbose=2 "$APP"
           codesign -dvv "$APP" 2>&1 | grep -E "Identifier|Authority|Signature|TeamIdentifier"
           echo "--- requisito di firma:"
           REQ=$(codesign -d -r- "$APP" 2>&1 | grep designated)
           echo "$REQ"
-          # deve dipendere dall'identificativo e dal certificato, non da un hash del codice (che cambia a ogni build)
-          # (un certificato proprio è la radice di se stesso: compare "certificate root" invece di "leaf")
-          echo "$REQ" | grep -Eq 'certificate (leaf|root) = H' || { echo "ERRORE: firma non stabile"; exit 1; }
+          # deve dipendere solo dall'identificativo, non da un hash del codice (che cambia a ogni build)
+          echo "$REQ" | grep -q 'identifier "com.lbslabs.remote"' || { echo "ERRORE: requisito di firma mancante"; exit 1; }
           echo "$REQ" | grep -q 'cdhash' && { echo "ERRORE: la firma dipende dall'hash del codice"; exit 1; }
           echo "firma stabile OK"
       - name: Autotest dell'app impacchettata (Intel)

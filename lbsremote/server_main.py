@@ -8,6 +8,7 @@ import sys
 import threading
 
 from . import APP_NAME, __version__
+from . import platform_utils as pu
 from .config import config_dir, load_json, save_json
 from .server import AgentServer, ServerSettings
 
@@ -31,6 +32,25 @@ def setup_logging(verbose: bool, filename: str) -> None:
         sh = logging.StreamHandler()
         sh.setFormatter(fmt)
         root.addHandler(sh)
+
+
+def _repair_stale_permissions() -> bool:
+    """macOS: se mancano permessi, una volta per versione si cancellano le voci rimaste e si richiedono di nuovo.
+
+    Un permesso può risultare attivo in Impostazioni di Sistema ma non valere più (firma dell'app cambiata
+    da un aggiornamento): si evita così la procedura manuale "rimuovi e riaggiungi". Se invece i permessi
+    sono validi non si tocca nulla. Restituisce True se ha già richiesto i permessi.
+    """
+    if sys.platform != "darwin" or not pu.permission_problems(prompt=False):
+        return False
+    state = load_json("app.json", {})
+    if state.get("permission_repair_version") == __version__:
+        return False
+    log.info("permessi mancanti: ripristino delle voci di macOS (una volta per versione)")
+    pu.mac_reset_permissions()
+    state["permission_repair_version"] = __version__
+    save_json("app.json", state)
+    return True
 
 
 def build_settings(args) -> ServerSettings:
@@ -63,7 +83,10 @@ def create_agent(settings: ServerSettings) -> tuple[AgentServer, str | None]:
             importlib.import_module("pynput.mouse")
         except Exception:
             log.warning("pynput non disponibile", exc_info=True)
-    server.check_permissions(prompt=True)
+    repaired = _repair_stale_permissions()
+    server.check_permissions(prompt=not repaired)
+    if sys.platform == "darwin":
+        pu.mac_trigger_local_network()       # la richiesta "Rete locale" compare subito, non alla prima connessione
     try:
         server.start()
         return server, None

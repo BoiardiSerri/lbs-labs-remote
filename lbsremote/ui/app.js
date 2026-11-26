@@ -550,6 +550,34 @@ window.LBS = {
   },
 }
 
+// ============================================================================
+// Mac: procedura guidata dei permessi (Registrazione schermo, Accessibilità, Rete locale)
+// ============================================================================
+async function refreshPermissions() {
+  if (S.mobile || !S.api || typeof S.api.get_permissions !== 'function') return
+  let p = null
+  try { p = await S.api.get_permissions() } catch (e) { return }
+  if (!p || !p.supported) return
+  const missing = p.screen === false || p.accessibility === false
+  $('perm-panel').classList.toggle('hidden', !missing || S.mode !== 'connect')
+  for (const key of ['screen', 'accessibility']) {
+    const row = document.querySelector(`#perm-panel [data-perm="${key}"]`)
+    const chip = row.querySelector('.ds-chip')
+    const ok = p[key] === true
+    chip.className = `ds-chip ds-chip--small ds-chip--${ok ? 'ok' : 'warn'}`
+    chip.querySelector('.ds-chip__text').textContent = ok ? 'ALLOWED' : 'NEEDED'
+  }
+}
+
+function setupPermissionPanel() {
+  document.querySelectorAll('#perm-panel [data-allow]').forEach((b) => b.addEventListener('click', () => {
+    if (S.api && S.api.request_permission) S.api.request_permission(b.dataset.allow)
+  }))
+  $('btn-restart').addEventListener('click', () => { if (S.api && S.api.restart_app) S.api.restart_app() })
+  refreshPermissions()
+  setInterval(refreshPermissions, 1500)
+}
+
 function updateAgentChip(a) {
   const chip = $('chip-agent')
   if (a.state === 'ready') setChip(chip, 'ok', 'THIS COMPUTER: READY', 'Other computers can control this one.')
@@ -624,6 +652,7 @@ async function init() {
     if (st.connect_now) connect(st.connect_now)
   }
   refreshServers()
+  setupPermissionPanel()
 }
 
 function setupStatic() {

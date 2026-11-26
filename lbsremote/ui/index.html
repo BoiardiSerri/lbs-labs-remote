@@ -40,6 +40,35 @@
       <div class="ds-panel__body connect-body">
         <div id="connect-banners" class="banners"></div>
 
+        <!-- Mac: procedura guidata dei permessi (compare solo se ne manca qualcuno) -->
+        <div id="perm-panel" class="perm-panel hidden">
+          <div class="t-eyebrow ds-eyebrow-label">Set up this Mac</div>
+          <div class="t-caption c-muted perm-intro">So that other computers can see and control this Mac, allow these once.
+            macOS keeps them after updates. When both are allowed, restart the app.</div>
+          <div class="ds-display perm-list">
+            <div class="ds-row" data-perm="screen">
+              <span class="ds-row__name t-value">Screen Recording</span>
+              <span class="ds-row__spacer"></span>
+              <span class="ds-chip ds-chip--small ds-chip--warn"><span class="ds-chip__text">NEEDED</span></span>
+              <button class="ds-btn ds-btn--small" data-allow="screen">Allow…</button>
+            </div>
+            <div class="ds-row is-alt" data-perm="accessibility">
+              <span class="ds-row__name t-value">Accessibility</span>
+              <span class="ds-row__spacer"></span>
+              <span class="ds-chip ds-chip--small ds-chip--warn"><span class="ds-chip__text">NEEDED</span></span>
+              <button class="ds-btn ds-btn--small" data-allow="accessibility">Allow…</button>
+            </div>
+            <div class="ds-row" data-perm="local_network">
+              <span class="ds-row__name t-value">Local Network</span>
+              <span class="ds-row__spacer"></span>
+              <button class="ds-btn ds-btn--small" data-allow="local_network">Allow…</button>
+            </div>
+          </div>
+          <div class="perm-actions">
+            <button id="btn-restart" class="ds-btn ds-btn--small"><span class="ic" data-icon="refresh"></span><span>Restart app</span></button>
+          </div>
+        </div>
+
         <div class="brand">
           <img src="lbs/logo/lbs-logo.svg" width="64" height="64" alt="LBS">
           <div>

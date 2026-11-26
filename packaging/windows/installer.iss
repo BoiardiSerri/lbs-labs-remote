@@ -68,7 +68,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: 
 [Run]
 ; Regola del firewall: niente richieste di autorizzazione (reti private e di dominio)
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""LBS Labs Remote"""; Flags: runhidden; StatusMsg: "Configuring the firewall..."
-Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""LBS Labs Remote"" dir=in action=allow program=""{app}\LBSLabsRemote.exe"" enable=yes profile=private,domain"; Flags: runhidden; StatusMsg: "Configuring the firewall..."
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""LBS Labs Remote"" dir=in action=allow program=""{app}\LBSLabsRemote.exe"" enable=yes profile=any"; Flags: runhidden; StatusMsg: "Configuring the firewall..."
 #ifexist AddBackslash(SourcePath) + "MicrosoftEdgeWebview2Setup.exe"
 Filename: "{tmp}\MicrosoftEdgeWebview2Setup.exe"; Parameters: "/silent /install"; StatusMsg: "Installing Microsoft Edge WebView2..."; Check: NeedsWebView2; Flags: waituntilterminated
 #endif

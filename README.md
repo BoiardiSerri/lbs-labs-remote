@@ -258,19 +258,37 @@ Note:
 - Il **Mac che controlla** (solo viewer) non ha bisogno di permessi. Se però lanci l'app in modalità
   normale, l'agente parte e macOS chiede i permessi anche lì. Per evitarlo usa `--viewer`.
 
-### Se il Mac mostra uno schermo grigio e l'avviso "permission missing"
-Succede quando i permessi risultano attivi in Impostazioni di Sistema ma macOS non li considera più
-validi (accade dopo un aggiornamento fatto con versioni precedenti alla 1.2.1, la cui firma cambiava
-a ogni build). Dal menu dell'icona scegli **Reset permissions…** (compare solo se manca qualcosa),
-consenti i due permessi quando macOS li chiede, poi **Quit** e riapri l'app. In alternativa, da
-Terminale (con l'app chiusa):
+### Procedura guidata (dalla 1.2.2)
+Al primo avvio sul Mac compare nella finestra iniziale il pannello **SET UP THIS MAC** con i tre
+permessi richiesti, ciascuno con il pulsante **Allow…** che mostra la richiesta di sistema e apre la
+pagina giusta delle Impostazioni:
+1. **Screen Recording** e 2. **Accessibility**: attiva l'interruttore accanto a LBS Labs Remote; lo
+   stato diventa *ALLOWED* da solo.
+3. **Local Network** (macOS 15 e successivi): consenti quando macOS lo chiede.
+Alla fine premi **Restart app**: macOS applica la Registrazione schermo solo ai processi avviati dopo.
+Il pannello sparisce quando i permessi sono a posto; dal menu dell'icona si riapre con
+**Set up permissions…**.
+
+### Aggiornamenti: i permessi restano
+L'app è firmata con una chiave fissa (`packaging/macos/lbs-labs-codesign.p12`) e con un requisito
+che dipende solo dall'identificativo `com.lbslabs.remote`: macOS riconosce le versioni successive
+come la stessa app e non chiede di nuovo i permessi. Se un permesso risulta attivo ma non vale più
+(succede una sola volta passando da versioni precedenti alla 1.2.1), all'avvio l'app cancella le
+voci rimaste e le richiede da sola, una volta per versione; in alternativa usa **Reset permissions…**
+dal menu dell'icona, oppure da Terminale con l'app chiusa:
 ```bash
 tccutil reset ScreenCapture com.lbslabs.remote
 tccutil reset Accessibility com.lbslabs.remote
 ```
-Dalla 1.2.1 l'app è firmata con un'identità stabile (`packaging/macos/lbs-labs-codesign.p12`): i
-permessi concessi restano validi anche dopo gli aggiornamenti. Il passaggio da una versione precedente
-alla 1.2.1 richiede un'ultima volta questa procedura.
+
+### Altri sistemi
+- **Windows**: nessun permesso da concedere; l'installer apre il firewall per l'app su tutti i tipi di
+  rete (privata, pubblica, dominio).
+- **Android**: tutti i permessi sono di installazione (Internet, Wi-Fi) e vengono concessi in automatico.
+  L'APK è sempre firmato con la stessa chiave, quindi gli aggiornamenti si installano sopra.
+- **iPad / iPhone**: l'unico permesso è **Rete locale**; la richiesta compare all'apertura dell'app, non
+  alla prima connessione. Se lo rifiuti, l'app lo segnala e indica dove riattivarlo (*Impostazioni → LBS
+  Labs Remote → Rete locale*).
 
 ---
 

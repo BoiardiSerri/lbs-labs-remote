@@ -20,6 +20,8 @@ final class AppCore {
     private var connectText = ""
     private var firstFrameLogged = false
     private var alive = true
+    /// l'utente ha rifiutato l'accesso alla rete locale (impostato da LocalNetworkPermission)
+    var localNetworkDenied = false
 
     init(host: CoreHost, version: String, connectNow: String, selfTest: Bool) {
         self.host = host
@@ -100,6 +102,9 @@ final class AppCore {
             "last_host": cfg["last_host"] ?? "",
             "connect_now": connectNow,
         ]
+        if localNetworkDenied {
+            st["notice"] = "Local Network access is turned off for this app. Turn it on in Settings > LBS Labs Remote > Local Network, then connect again."
+        }
         var settings: [String: Any] = [:]
         for k in ["port", "quality", "fps", "max_width"] { settings[k] = cfg[k] }
         st["settings"] = settings
