@@ -66,12 +66,12 @@ class TrayApp:
         if st["error"]:
             return "⚠ " + st["error"][:80]
         if st["client"]:
-            return f"Client connesso da {st['client']}"
-        return f"In ascolto sulla porta {st['port']}"
+            return f"Controlled from {st['client']}"
+        return f"Ready, listening on port {st['port']}"
 
     def _ip_text(self) -> str:
         ips = local_ipv4_addresses()
-        return "IP: " + (", ".join(ips) if ips else "nessuna rete")
+        return "IP: " + (", ".join(ips) if ips else "no network")
 
     def _build_menu(self):
         Item, Menu = self.pystray.MenuItem, self.pystray.Menu
@@ -80,27 +80,27 @@ class TrayApp:
         items = []
         if self.open_viewer:
             # default=True: doppio clic sull'icona (Windows) apre la finestra di connessione
-            items += [Item("Connetti a un PC remoto…", lambda icon, item: self.open_viewer(),
+            items += [Item("Connect to a remote computer…", lambda icon, item: self.open_viewer(),
                            default=True), Menu.SEPARATOR]
         items += [
-            Item(lambda item: "Questo PC: " + self._status_text().lower()
+            Item(lambda item: "This computer: " + self._status_text()
                  if not self.server.status()["error"] else self._status_text(), noop, enabled=False),
             Item(lambda item: self._ip_text(), noop, enabled=False),
         ]
         if pu.IS_MAC:
             items += [
-                Item("⚠ Concedi \"Registrazione schermo\"…",
+                Item("⚠ Grant \"Screen Recording\" permission…",
                      lambda icon, item: pu.mac_open_privacy_pane("ScreenCapture"),
-                     visible=missing("Registrazione schermo")),
-                Item("⚠ Concedi \"Accessibilità\"…",
+                     visible=missing("Screen Recording")),
+                Item("⚠ Grant \"Accessibility\" permission…",
                      lambda icon, item: pu.mac_open_privacy_pane("Accessibility"),
-                     visible=missing("Accessibilità")),
+                     visible=missing("Accessibility")),
             ]
         items.append(Menu.SEPARATOR)
         if autostart.is_supported():
-            items.append(Item("Avvia al login", self._toggle_autostart,
+            items.append(Item("Start at login", self._toggle_autostart,
                               checked=lambda item: autostart.is_enabled()))
-        items.append(Item("Esci", self._quit))
+        items.append(Item("Quit", self._quit))
         return Menu(*items)
 
     def _toggle_autostart(self, icon, item) -> None:
@@ -109,7 +109,7 @@ class TrayApp:
             log.info(msg)
         except Exception as exc:
             log.exception("modifica avvio automatico fallita")
-            self.notify(f"Impossibile modificare l'avvio automatico: {exc}")
+            self.notify(f"Unable to change the start-at-login setting: {exc}")
         self._refresh()
 
     def _quit(self, icon, item) -> None:
@@ -141,9 +141,9 @@ class TrayApp:
         client = status.get("client")
         if client and client != self._last_client and self.server.settings.notify_on_connect:
             # Solo trasparenza verso chi è davanti al PC: non è un controllo di accesso.
-            self.notify(f"Sessione di controllo remoto avviata da {client}")
+            self.notify(f"Remote control session started from {client}")
         elif not client and self._last_client and self.server.settings.notify_on_connect:
-            self.notify("Sessione di controllo remoto terminata")
+            self.notify("Remote control session ended")
         self._last_client = client
         self._refresh()
 
@@ -175,7 +175,7 @@ class TrayApp:
             if start_error:
                 self.notify(start_error)
             elif self.server.permission_problems:
-                self.notify("Permessi macOS mancanti: apri il menu dell'icona per concederli.")
+                self.notify("macOS permissions missing: open the menu bar icon to grant them.")
 
         self.icon.icon = make_icon_image(self._state())
         self.icon.run(setup=setup)

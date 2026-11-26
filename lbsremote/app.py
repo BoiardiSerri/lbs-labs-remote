@@ -28,31 +28,31 @@ APP_SCRIPT = Path(__file__).resolve().parent.parent / "lbs_labs_remote.py"
 def parse_args(argv=None):
     p = argparse.ArgumentParser(
         prog="lbs_labs_remote.py",
-        description=f"{APP_NAME} – controllo remoto in LAN. La stessa app su tutti i PC: "
-                    "rende controllabile questo PC (icona nella tray/menu bar) e permette "
-                    "di controllarne altri.")
-    p.add_argument("host", nargs="?", help="PC a cui connettersi subito (es. 192.168.1.50 o 192.168.1.50:5970)")
+        description=f"{APP_NAME} – LAN remote control. The same app on every computer: "
+                    "makes this computer controllable (tray / menu bar icon) and lets you "
+                    "control others.")
+    p.add_argument("host", nargs="?", help="computer to connect to right away (e.g. 192.168.1.50 or 192.168.1.50:5970)")
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--agent", action="store_true",
-                      help="solo agente in background (icona), nessuna finestra: per il PC da controllare")
+                      help="background agent only (icon), no window: for the computer to be controlled")
     mode.add_argument("--viewer", action="store_true",
-                      help="solo finestra di connessione: questo PC NON diventa controllabile")
-    mode.add_argument("--install-autostart", action="store_true", help="avvia l'agente al login ed esci")
-    mode.add_argument("--uninstall-autostart", action="store_true", help="rimuovi l'avvio al login ed esci")
+                      help="connection window only: this computer does NOT become controllable")
+    mode.add_argument("--install-autostart", action="store_true", help="start the agent at login, then exit")
+    mode.add_argument("--uninstall-autostart", action="store_true", help="remove start at login, then exit")
 
-    g = p.add_argument_group("opzioni dell'agente")
-    g.add_argument("--port", type=int, help="porta TCP di ascolto (predefinita 5970)")
-    g.add_argument("--discovery-port", type=int, help="porta UDP degli annunci (predefinita 5901)")
-    g.add_argument("--fps", type=int, help="frame al secondo (predefinito 12)")
-    g.add_argument("--quality", type=int, help="qualità JPEG 10-95 (predefinita 50)")
-    g.add_argument("--max-width", type=int, help="larghezza massima dei frame in pixel, 0 = originale")
-    g.add_argument("--monitor", type=int, help="schermo da catturare (1 = principale)")
-    g.add_argument("--no-adaptive", action="store_true", help="disattiva qualità adattiva")
-    g.add_argument("--no-discovery", action="store_true", help="non annunciare il PC in rete")
-    g.add_argument("--no-notify", action="store_true", help="nessuna notifica alla connessione")
-    g.add_argument("--no-tray", action="store_true", help="niente icona: agente in console (Ctrl+C per uscire)")
-    g.add_argument("--save", action="store_true", help="salva queste opzioni in ~/.lbslabs-remote/server.json")
-    p.add_argument("-v", "--verbose", action="store_true", help="log dettagliato")
+    g = p.add_argument_group("agent options")
+    g.add_argument("--port", type=int, help="TCP listening port (default 5970)")
+    g.add_argument("--discovery-port", type=int, help="UDP discovery port (default 5901)")
+    g.add_argument("--fps", type=int, help="frames per second (default 12)")
+    g.add_argument("--quality", type=int, help="JPEG quality 10-95 (default 50)")
+    g.add_argument("--max-width", type=int, help="maximum frame width in pixels, 0 = original")
+    g.add_argument("--monitor", type=int, help="screen to capture (1 = main)")
+    g.add_argument("--no-adaptive", action="store_true", help="disable adaptive quality")
+    g.add_argument("--no-discovery", action="store_true", help="do not announce this computer on the network")
+    g.add_argument("--no-notify", action="store_true", help="no notification when someone connects")
+    g.add_argument("--no-tray", action="store_true", help="no icon: run the agent in the console (Ctrl+C to quit)")
+    g.add_argument("--save", action="store_true", help="save these options to ~/.lbslabs-remote/server.json")
+    p.add_argument("-v", "--verbose", action="store_true", help="verbose logging")
     p.add_argument("--selftest", metavar="FILE", help=argparse.SUPPRESS)
     p.add_argument("--notice", help=argparse.SUPPRESS)   # avviso da mostrare nella finestra
     # parse_known_args: macOS può passare argomenti propri (es. -psn_0_123) alle app
@@ -153,9 +153,9 @@ def main(argv=None) -> None:
 
     if _mac_wrong_location():
         _show_message(APP_NAME,
-                      "Per funzionare correttamente LBS Labs Remote va copiata nella cartella "
-                      "Applicazioni.\n\nTrascina l'icona di LBS Labs Remote sulla cartella "
-                      "\"Applicazioni\" nella finestra del disco, poi aprila da lì.")
+                      "To work properly, LBS Labs Remote must be copied to the Applications "
+                      "folder.\n\nDrag the LBS Labs Remote icon onto the \"Applications\" "
+                      "folder in the disk window, then open it from there.")
         return
 
     if args.install_autostart or args.uninstall_autostart:

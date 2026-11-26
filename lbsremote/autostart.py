@@ -72,21 +72,21 @@ def enable() -> str:
         }
         with open(MAC_PLIST, "wb") as fh:
             plistlib.dump(plist, fh)
-        return f"LaunchAgent creato: {MAC_PLIST}"
+        return f"LaunchAgent created: {MAC_PLIST}"
     if sys.platform.startswith("win"):
         import winreg
         command = " ".join(f'"{a}"' for a in args)
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, WIN_RUN_KEY) as key:
             winreg.SetValueEx(key, WIN_VALUE_NAME, 0, winreg.REG_SZ, command)
-        return f"Avvio automatico registrato: {command}"
-    raise OSError("avvio automatico supportato solo su Windows e macOS")
+        return f"Start at login enabled: {command}"
+    raise OSError("start at login is supported only on Windows and macOS")
 
 
 def disable() -> str:
     if sys.platform == "darwin":
         if MAC_PLIST.exists():
             MAC_PLIST.unlink()
-        return "LaunchAgent rimosso (effettivo dal prossimo login)"
+        return "LaunchAgent removed (takes effect at next login)"
     if sys.platform.startswith("win"):
         import winreg
         try:
@@ -95,5 +95,5 @@ def disable() -> str:
                 winreg.DeleteValue(key, WIN_VALUE_NAME)
         except FileNotFoundError:
             pass
-        return "Avvio automatico rimosso"
-    raise OSError("avvio automatico supportato solo su Windows e macOS")
+        return "Start at login disabled"
+    raise OSError("start at login is supported only on Windows and macOS")

@@ -20,9 +20,9 @@ try:
     from tkinter import ttk
 except ImportError:  # pragma: no cover
     sys.stderr.write(
-        "tkinter non è disponibile in questa installazione di Python.\n"
-        "  macOS con Homebrew:  brew install python-tk\n"
-        "  Windows / python.org: reinstalla Python includendo 'tcl/tk and IDLE'.\n")
+        "tkinter is not available in this Python installation.\n"
+        "  macOS with Homebrew:  brew install python-tk\n"
+        "  Windows / python.org: reinstall Python including 'tcl/tk and IDLE'.\n")
     raise
 
 from PIL import Image, ImageTk
@@ -50,22 +50,22 @@ CLICK_SWALLOW_S = 0.3       # il clic che "attiva" la finestra non viene inoltra
 DOUBLE_CLICK_S = 0.45
 
 QUALITY_PRESETS = {
-    "Automatica": {},                                   # default dell'agente, adattiva
-    "Bassa": {"quality": 35, "adaptive": False},
-    "Media": {"quality": 55, "adaptive": False},
-    "Alta": {"quality": 75, "adaptive": False},
-    "Massima": {"quality": 90, "adaptive": False},
+    "Automatic": {},                                   # default dell'agente, adattiva
+    "Low": {"quality": 35, "adaptive": False},
+    "Medium": {"quality": 55, "adaptive": False},
+    "High": {"quality": 75, "adaptive": False},
+    "Maximum": {"quality": 90, "adaptive": False},
 }
-FPS_CHOICES = ["Predefiniti", "5", "10", "15", "20", "25", "30"]
-WIDTH_CHOICES = ["Predefinita", "1280", "1600", "1920", "2560", "Originale"]
+FPS_CHOICES = ["Default", "5", "10", "15", "20", "25", "30"]
+WIDTH_CHOICES = ["Default", "1280", "1600", "1920", "2560", "Original"]
 
 DEFAULT_CONFIG = {
     "last_host": "",
     "port": DEFAULT_PORT,
     "discovery_port": DISCOVERY_PORT,
-    "quality": "Automatica",
-    "fps": "Predefiniti",
-    "max_width": "Predefinita",
+    "quality": "Automatic",
+    "fps": "Default",
+    "max_width": "Default",
 }
 
 COLOR_OK = "#22c55e"
@@ -148,7 +148,7 @@ class NetSession:
             configure_socket(sock, RECV_TIMEOUT)
             first = sock.recv(8, socket.MSG_PEEK)
             if not first:
-                raise ConnectionClosed("il computer remoto ha chiuso subito la connessione")
+                raise ConnectionClosed("the remote computer closed the connection immediately")
             if first.startswith(b"RFB") or first[:4] in (b"HTTP", b"SSH-"):
                 raise ProtocolError(describe_foreign_service(first, self.port))
             try:
@@ -161,12 +161,12 @@ class NetSession:
             if self.remote_config:
                 send_json(sock, MSG_CONFIG, self.remote_config)
         except socket.timeout:
-            err = ("nessuna risposta. Il PC è acceso e in rete? L'agente è avviato? "
-                   "Il firewall blocca la porta?")
+            err = ("no response. Is the computer on and connected to the network? Is LBS Labs "
+                   "Remote running on it? Is a firewall blocking the port?")
         except ConnectionRefusedError:
-            err = f"connessione rifiutata: l'agente non è in ascolto sulla porta {self.port}."
+            err = f"connection refused: LBS Labs Remote is not listening on port {self.port}."
         except socket.gaierror:
-            err = "indirizzo non valido o nome non risolvibile."
+            err = "invalid address or unknown computer name."
         except (OSError, ProtocolError, ConnectionClosed) as exc:
             err = str(exc) or exc.__class__.__name__
         else:
@@ -202,7 +202,7 @@ class NetSession:
             if self._stop.is_set():
                 return
             if err is not None:
-                self._post("closed", f"Connessione persa con {self.host}: {err}")
+                self._post("closed", f"Connection to {self.host} lost: {err}")
                 return
             self._post("reconnected", self.hello)
 
@@ -231,10 +231,10 @@ class NetSession:
                 elif msg_type == MSG_NOTICE:
                     self._post("notice", decode_json(payload))
                 elif msg_type == MSG_BYE:
-                    return "bye", str(decode_json(payload).get("reason") or "Sessione chiusa dal server.")
+                    return "bye", str(decode_json(payload).get("reason") or "Session closed by the remote computer.")
             return "stopped", ""
         except socket.timeout:
-            return "lost", "nessun dato dal PC remoto da alcuni secondi"
+            return "lost", "no data from the remote computer for several seconds"
         except (OSError, ConnectionClosed, ProtocolError, ValueError, KeyError) as exc:
             return "lost", str(exc) or exc.__class__.__name__
         finally:
@@ -315,8 +315,8 @@ class Viewer:
         # --- barra superiore sottile (nascosta in schermo intero) ---
         small = tkfont.nametofont("TkDefaultFont").copy()
         self.toolbar = tk.Frame(win, bg=TOOLBAR_BG, padx=6, pady=3)
-        self.btn_fs = self._toolbar_button("⛶  Schermo intero", self.toggle_fullscreen, small)
-        self.btn_disc = self._toolbar_button("✕  Disconnetti", app.disconnect, small)
+        self.btn_fs = self._toolbar_button("⛶  Full screen", self.toggle_fullscreen, small)
+        self.btn_disc = self._toolbar_button("✕  Disconnect", app.disconnect, small)
         self.status = tk.Label(self.toolbar, text="", bg=TOOLBAR_BG, fg=COLOR_OK, font=small)
         self.status.pack(side="right", padx=4)
         self.toolbar.pack(side="top", fill="x")
@@ -439,7 +439,7 @@ class Viewer:
         if not text:
             return
         prefix = "⚠ " if notice.get("level") in ("warning", "error") else ""
-        self.banner.configure(text=f"{prefix}{text}   (clic per chiudere)",
+        self.banner.configure(text=f"{prefix}{text}   (click to dismiss)",
                               wraplength=max(300, self.win.winfo_width() - 30))
         self.banner.pack(side="top", fill="x", before=self.canvas)
 
@@ -447,7 +447,7 @@ class Viewer:
         self.state = state
         if state == "reconnecting":
             self.release_all(send=False)
-            self.show_overlay("Connessione persa – riconnessione in corso…")
+            self.show_overlay("Connection lost – reconnecting…")
         else:
             self.show_overlay(None)
         self.update_status()
@@ -455,13 +455,13 @@ class Viewer:
     def update_status(self) -> None:
         session = self.app.session
         if self.state == "reconnecting":
-            text, color = "● Riconnessione…", COLOR_WARN
+            text, color = "● Reconnecting…", COLOR_WARN
         else:
-            text, color = "● Connesso", COLOR_OK
+            text, color = "● Connected", COLOR_OK
             if session and session.rtt_ms is not None:
                 text += f" · {session.rtt_ms:.0f} ms"
             if not self.focused:
-                text += "  ·  clic sull'immagine per controllare"
+                text += "  ·  click the screen to take control"
         if text != self._status_text:
             self._status_text = text
             self.status.configure(text=text, fg=color)
@@ -477,7 +477,7 @@ class Viewer:
         if on:
             self.toolbar.pack_forget()
             self.win.attributes("-fullscreen", True)
-            self.show_overlay("Premi ESC per uscire dallo schermo intero", duration_ms=2500)
+            self.show_overlay("Press ESC to exit full screen", duration_ms=2500)
         else:
             self.win.attributes("-fullscreen", False)
             self.toolbar.pack(side="top", fill="x", before=self.banner if self.banner.winfo_ismapped()
@@ -708,7 +708,7 @@ class ClientApp:
         self.root.after(15, self._poll)
         self.root.after(300, self._refresh_servers)
         if notice:
-            self.show_message("⚠ Questo computer non può essere controllato da altri PC: " + notice)
+            self.show_message("⚠ This computer cannot be controlled by other computers: " + notice)
         if initial_host:
             self.ip_var.set(initial_host)
             self.root.after(100, self.connect_from_entry)
@@ -731,13 +731,13 @@ class ClientApp:
         frm.columnconfigure(0, weight=1)
         self.frm = frm
 
-        ttk.Label(frm, text="Connetti a un PC remoto", font=title_font).grid(
+        ttk.Label(frm, text="Connect to a remote computer", font=title_font).grid(
             row=0, column=0, columnspan=2, sticky="w")
 
         self.ip_var = tk.StringVar(value=str(self.cfg.get("last_host") or ""))
         self.entry = ttk.Entry(frm, textvariable=self.ip_var, width=26, font=entry_font)
         self.entry.grid(row=1, column=0, sticky="ew", pady=(12, 6), ipady=3)
-        self.btn = ttk.Button(frm, text="Connetti", command=self.connect_from_entry)
+        self.btn = ttk.Button(frm, text="Connect", command=self.connect_from_entry)
         self.btn.grid(row=1, column=1, sticky="ns", padx=(8, 0), pady=(12, 6))
 
         self.msg = ttk.Label(frm, text="", wraplength=340, justify="left")
@@ -748,7 +748,7 @@ class ClientApp:
         self.found.grid(row=3, column=0, columnspan=2, sticky="w", pady=(6, 0))
         self.found.grid_remove()
 
-        self.adv_link = ttk.Label(frm, text="Impostazioni avanzate ▸", foreground=COLOR_MUTED,
+        self.adv_link = ttk.Label(frm, text="Advanced settings ▸", foreground=COLOR_MUTED,
                                   cursor="hand2", font=small)
         self.adv_link.grid(row=4, column=0, columnspan=2, sticky="w", pady=(12, 0))
         self.adv_link.bind("<Button-1>", lambda e: self._toggle_advanced())
@@ -769,18 +769,18 @@ class ClientApp:
         adv = ttk.Frame(parent)
         self.port_var = tk.StringVar(value=str(self.cfg.get("port") or DEFAULT_PORT))
         self.quality_var = tk.StringVar(value=self.cfg.get("quality") if self.cfg.get("quality")
-                                        in QUALITY_PRESETS else "Automatica")
+                                        in QUALITY_PRESETS else "Automatic")
         self.fps_var = tk.StringVar(value=str(self.cfg.get("fps")) if str(self.cfg.get("fps"))
-                                    in FPS_CHOICES else "Predefiniti")
+                                    in FPS_CHOICES else "Default")
         self.width_var = tk.StringVar(value=str(self.cfg.get("max_width")) if str(self.cfg.get("max_width"))
-                                      in WIDTH_CHOICES else "Predefinita")
+                                      in WIDTH_CHOICES else "Default")
         rows = [
-            ("Porta", ttk.Entry(adv, textvariable=self.port_var, width=8)),
-            ("Qualità immagine", ttk.Combobox(adv, textvariable=self.quality_var, state="readonly",
+            ("Port", ttk.Entry(adv, textvariable=self.port_var, width=8)),
+            ("Image quality", ttk.Combobox(adv, textvariable=self.quality_var, state="readonly",
                                               values=list(QUALITY_PRESETS), width=12)),
-            ("Fotogrammi/s", ttk.Combobox(adv, textvariable=self.fps_var, state="readonly",
+            ("Frames per second", ttk.Combobox(adv, textvariable=self.fps_var, state="readonly",
                                           values=FPS_CHOICES, width=12)),
-            ("Larghezza max (px)", ttk.Combobox(adv, textvariable=self.width_var, state="readonly",
+            ("Max width (px)", ttk.Combobox(adv, textvariable=self.width_var, state="readonly",
                                                 values=WIDTH_CHOICES, width=12)),
         ]
         for i, (label, widget) in enumerate(rows):
@@ -791,10 +791,10 @@ class ClientApp:
     def _toggle_advanced(self) -> None:
         if self.adv.winfo_ismapped():
             self.adv.grid_remove()
-            self.adv_link.configure(text="Impostazioni avanzate ▸")
+            self.adv_link.configure(text="Advanced settings ▸")
         else:
             self.adv.grid(row=5, column=0, columnspan=2, sticky="w", pady=(6, 0))
-            self.adv_link.configure(text="Impostazioni avanzate ▾")
+            self.adv_link.configure(text="Advanced settings ▾")
 
     def show_message(self, text: str | None, color: str = COLOR_ERR) -> None:
         if text:
@@ -818,11 +818,11 @@ class ClientApp:
                 for child in self.found.winfo_children():
                     child.destroy()
                 if servers:
-                    ttk.Label(self.found, text="PC trovati in rete:", foreground=COLOR_MUTED,
+                    ttk.Label(self.found, text="Computers found on the network:", foreground=COLOR_MUTED,
                               font=self._fonts[1]).pack(anchor="w")
                     for s in servers:
                         target = s["ip"] if s["port"] == DEFAULT_PORT else f"{s['ip']}:{s['port']}"
-                        text = f"{s['name']}  ({target})" + ("  · in uso" if s["busy"] else "")
+                        text = f"{s['name']}  ({target})" + ("  · in use" if s["busy"] else "")
                         link = ttk.Label(self.found, text=text, foreground=COLOR_LINK, cursor="hand2")
                         link.pack(anchor="w", padx=(10, 0), pady=1)
                         link.bind("<Button-1>", lambda e, t=target: self._connect_to(t))
@@ -845,7 +845,7 @@ class ClientApp:
         if self.fps_var.get().isdigit():
             cfg["fps"] = int(self.fps_var.get())
         width = self.width_var.get()
-        if width == "Originale":
+        if width == "Original":
             cfg["max_width"] = 0
         elif width.isdigit():
             cfg["max_width"] = int(width)
@@ -865,17 +865,17 @@ class ClientApp:
             return
         text = self.ip_var.get().strip()
         if not text:
-            self.show_message("Inserisci l'indirizzo IP del PC remoto.")
+            self.show_message("Enter the IP address of the remote computer.")
             self.entry.focus_set()
             return
         try:
             host, port = parse_host_port(text, self._adv_port())
         except ValueError as exc:
-            self.show_message(f"Indirizzo non valido: {exc}")
+            self.show_message(f"Invalid address: {exc}")
             return
         self._save_config()
         self.connecting_text = text
-        self.show_message(f"Connessione a {host}…", COLOR_MUTED)
+        self.show_message(f"Connecting to {host}…", COLOR_MUTED)
         self.btn.state(["disabled"])
         self.session = NetSession(host, port, self._remote_config(), self.events)
         self.session.start()
@@ -932,7 +932,7 @@ class ClientApp:
             host = self.session.host
             self.session = None
             self.btn.state(["!disabled"])
-            self.show_message(f"Impossibile connettersi a {host}: {data}")
+            self.show_message(f"Unable to connect to {host}: {data}")
             self.entry.focus_set()
         elif kind == "reconnecting" and self.viewer:
             self.viewer.set_state("reconnecting")

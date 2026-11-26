@@ -109,14 +109,14 @@ def permission_problems(prompt: bool = False) -> list[str]:
         if prompt:
             mac_request_screen_recording()
         problems.append(
-            "Permesso \"Registrazione schermo\" mancante sul Mac remoto: lo schermo "
-            "apparirà vuoto o solo con lo sfondo. Concedilo in Impostazioni di Sistema > "
-            "Privacy e sicurezza > Registrazione schermo, poi riavvia l'agente.")
+            "\"Screen Recording\" permission missing on the remote Mac: the screen will look "
+            "empty or show only the wallpaper. Grant it in System Settings > Privacy & "
+            "Security > Screen Recording, then quit and reopen LBS Labs Remote.")
     if mac_has_accessibility(prompt=prompt) is False:
         problems.append(
-            "Permesso \"Accessibilità\" mancante sul Mac remoto: mouse e tastiera "
-            "non avranno effetto. Concedilo in Impostazioni di Sistema > Privacy e "
-            "sicurezza > Accessibilità, poi riavvia l'agente.")
+            "\"Accessibility\" permission missing on the remote Mac: mouse and keyboard "
+            "will have no effect. Grant it in System Settings > Privacy & Security > "
+            "Accessibility, then quit and reopen LBS Labs Remote.")
     return problems
 
 

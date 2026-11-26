@@ -126,11 +126,11 @@ jobs:
           VERSION=$(python3 -c "import lbsremote; print(lbsremote.__version__)")
           TAG="v$VERSION"
           ls -la artifacts
-          NOTES="Scarica il file per il tuo computer:
-          - Mac (tutti: chip Apple M1/M2/M3/M4 e Intel, app Universale): LBS-Labs-Remote-macOS.dmg
+          NOTES="Download the file for your computer:
+          - Mac (all models: Apple silicon M1/M2/M3/M4 and Intel, Universal app): LBS-Labs-Remote-macOS.dmg
           - Windows: LBS-Labs-Remote-Windows-Setup.exe
 
-          Build del $(date -u '+%d/%m/%Y %H:%M') UTC (commit ${GITHUB_SHA::7})."
+          Built on $(date -u '+%Y-%m-%d %H:%M') UTC (commit ${GITHUB_SHA::7})."
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --notes "$NOTES"
           else

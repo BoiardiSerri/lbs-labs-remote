@@ -90,7 +90,7 @@ def recv_exact(sock: socket.socket, n: int) -> bytes:
     while pos < n:
         got = sock.recv_into(view[pos:], n - pos)
         if got == 0:
-            raise ConnectionClosed("connessione chiusa dall'altro capo")
+            raise ConnectionClosed("connection closed by the other side")
         pos += got
     return bytes(buf)
 
@@ -111,7 +111,7 @@ def decode_json(payload: bytes):
     try:
         return json.loads(payload.decode("utf-8"))
     except (UnicodeDecodeError, ValueError) as exc:
-        raise ProtocolError(f"JSON non valido: {exc}") from exc
+        raise ProtocolError(f"invalid JSON: {exc}") from exc
 
 
 def send_json(sock: socket.socket, msg_type: int, obj) -> None:
@@ -122,7 +122,7 @@ def recv_message(sock: socket.socket) -> tuple[int, bytes]:
     """Riceve un messaggio completo. Restituisce (tipo, payload)."""
     length, msg_type = _HEADER.unpack(recv_exact(sock, HEADER_SIZE))
     if length > MAX_MESSAGE_SIZE:
-        raise ProtocolError(f"messaggio troppo grande ({length} byte)")
+        raise ProtocolError(f"message too large ({length} bytes)")
     payload = recv_exact(sock, length) if length else b""
     return msg_type, payload
 
@@ -130,18 +130,17 @@ def recv_message(sock: socket.socket) -> tuple[int, bytes]:
 def describe_foreign_service(first_bytes: bytes, port: int) -> str:
     """Messaggio chiaro quando sulla porta risponde un programma diverso da LBS Labs Remote."""
     if first_bytes.startswith(b"RFB"):
-        return (f"sulla porta {port} risponde un altro programma di controllo remoto (VNC, ad es. "
-                "la Condivisione schermo di macOS), non LBS Labs Remote. Aggiorna LBS Labs Remote "
-                "su entrambi i computer all'ultima versione oppure disattiva la Condivisione schermo "
-                "sul computer remoto.")
-    return f"sulla porta {port} risponde un altro programma, non LBS Labs Remote."
+        return (f"another remote control program (VNC, e.g. macOS Screen Sharing) is answering "
+                f"on port {port}, not LBS Labs Remote. Update LBS Labs Remote to the latest "
+                "version on both computers, or turn off Screen Sharing on the remote computer.")
+    return f"another program is answering on port {port}, not LBS Labs Remote."
 
 
 def parse_host_port(text: str, default_port: int = DEFAULT_PORT) -> tuple[str, int]:
     """'192.168.1.5' -> ('192.168.1.5', default); '192.168.1.5:6000' -> (.., 6000)."""
     text = text.strip()
     if not text:
-        raise ValueError("indirizzo vuoto")
+        raise ValueError("empty address")
     if text.startswith("["):  # IPv6 [::1]:5970
         host, _, rest = text[1:].partition("]")
         port = int(rest[1:]) if rest.startswith(":") else default_port
@@ -149,6 +148,6 @@ def parse_host_port(text: str, default_port: int = DEFAULT_PORT) -> tuple[str, i
     if text.count(":") == 1:
         host, port_s = text.split(":")
         if not port_s.isdigit():
-            raise ValueError("porta non valida")
+            raise ValueError("invalid port")
         return host.strip(), int(port_s)
     return text, default_port

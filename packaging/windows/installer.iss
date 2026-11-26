@@ -34,10 +34,10 @@ CloseApplications=force
 UsedUserAreasWarning=no
 
 [Languages]
-Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "autostart"; Description: "Avvia LBS Labs Remote automaticamente all'accensione (consigliato sul PC da controllare a distanza)"; Flags: unchecked
+Name: "autostart"; Description: "Start LBS Labs Remote automatically when Windows starts (recommended on the computer to be controlled remotely)"; Flags: unchecked
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
@@ -54,9 +54,9 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: 
 
 [Run]
 ; Regola del firewall: niente richieste di autorizzazione (reti private e di dominio)
-Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""LBS Labs Remote"""; Flags: runhidden; StatusMsg: "Configurazione del firewall..."
-Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""LBS Labs Remote"" dir=in action=allow program=""{app}\LBSLabsRemote.exe"" enable=yes profile=private,domain"; Flags: runhidden; StatusMsg: "Configurazione del firewall..."
-Filename: "{app}\LBSLabsRemote.exe"; Description: "Avvia LBS Labs Remote adesso"; Flags: nowait postinstall skipifsilent runasoriginaluser
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""LBS Labs Remote"""; Flags: runhidden; StatusMsg: "Configuring the firewall..."
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""LBS Labs Remote"" dir=in action=allow program=""{app}\LBSLabsRemote.exe"" enable=yes profile=private,domain"; Flags: runhidden; StatusMsg: "Configuring the firewall..."
+Filename: "{app}\LBSLabsRemote.exe"; Description: "Launch LBS Labs Remote now"; Flags: nowait postinstall skipifsilent runasoriginaluser
 
 [UninstallRun]
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM LBSLabsRemote.exe"; Flags: runhidden; RunOnceId: "KillLBSLabsRemote"

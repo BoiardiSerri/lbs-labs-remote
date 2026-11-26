@@ -44,7 +44,7 @@ if sys.platform.startswith("win"):
     nums = tuple(int(x) for x in (VERSION.split(".") + ["0", "0", "0"])[:4])
     version_info = VSVersionInfo(
         ffi=FixedFileInfo(filevers=nums, prodvers=nums),
-        kids=[StringFileInfo([StringTable("041004B0", [
+        kids=[StringFileInfo([StringTable("040904B0", [
             StringStruct("CompanyName", "LBS Labs"),
             StringStruct("FileDescription", "LBS Labs Remote"),
             StringStruct("ProductName", "LBS Labs Remote"),
@@ -52,7 +52,7 @@ if sys.platform.startswith("win"):
             StringStruct("ProductVersion", VERSION),
             StringStruct("LegalCopyright", "© LBS Labs"),
             StringStruct("OriginalFilename", "LBSLabsRemote.exe")])]),
-              VarFileInfo([VarStruct("Translation", [0x0410, 1200])])])
+              VarFileInfo([VarStruct("Translation", [0x0409, 1200])])])
 exe = EXE(
     pyz, a.scripts, [],
     exclude_binaries=True,

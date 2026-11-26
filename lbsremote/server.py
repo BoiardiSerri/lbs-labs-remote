@@ -138,7 +138,7 @@ class ClientSession:
                 self.injector = InputInjector(self.monitor_geom)
             except Exception as exc:
                 log.exception("iniezione input non disponibile")
-                warnings.append(f"Controllo di mouse/tastiera non disponibile sul PC remoto: {exc}")
+                warnings.append(f"Mouse/keyboard control is not available on the remote computer: {exc}")
 
             self.send_json(MSG_HELLO, {
                 "app": APP_ID, "v": PROTOCOL_VERSION, "version": __version__,
@@ -282,7 +282,7 @@ class ClientSession:
             log.exception("errore nella cattura dello schermo")
             try:
                 self.send_json(MSG_NOTICE, {"level": "error",
-                                            "text": f"Cattura dello schermo fallita sul PC remoto: {exc}"},
+                                            "text": f"Screen capture failed on the remote computer: {exc}"},
                                timeout=1.0)
             except OSError:
                 pass
@@ -354,11 +354,11 @@ class AgentServer:
             self.port_in_use = True
             self.port_owner = probe_agent(self.settings.port)
             if self.port_owner == "agent":
-                self.error = "LBS Labs Remote è già in esecuzione su questo computer."
+                self.error = "LBS Labs Remote is already running on this computer."
             else:
-                self.error = (f"La porta {self.settings.port} è già usata da un altro programma su "
-                              "questo computer, quindi gli altri PC non possono controllarlo. "
-                              "Chiudi quel programma oppure scegli un'altra porta.")
+                self.error = (f"Port {self.settings.port} is already used by another program on "
+                              "this computer, so other computers cannot control it. Close that "
+                              "program or choose a different port.")
             self._notify_status()
             raise OSError(self.error) from exc
         s.listen(4)
@@ -385,7 +385,7 @@ class AgentServer:
         with self._lock:
             session = self.session
         if session:
-            session.close("L'agente sul PC remoto è stato chiuso.")
+            session.close("LBS Labs Remote was closed on the remote computer.")
 
     def _accept_loop(self) -> None:
         while not self._stopping:
@@ -406,7 +406,7 @@ class AgentServer:
             # L'ultimo client che si connette prende il controllo: evita di restare
             # bloccati da una connessione "zombie".
             log.info("nuovo client %s: chiudo la sessione di %s", new.ip, old.ip)
-            old.close(f"Il controllo è stato preso da un altro client ({new.ip}).")
+            old.close(f"Another computer ({new.ip}) has taken control.")
         log.info("client connesso da %s", new.ip)
         self._notify_status()
 
