@@ -78,3 +78,46 @@ body.mode-remote .ds-topbar__left { flex: none; }
 body.mode-remote .ds-topbar__center { flex: 1 1 auto; min-width: 0; overflow: hidden; }
 body.mode-remote .ds-topbar__right { flex: none; }
 body.mode-remote .ds-docname { min-width: 0; overflow: hidden; }
+
+/* ======================= tablet e telefoni (app per Android e iPad) ======================= */
+/* dimensione dell'interfaccia: 130 % sul touch (lo stile prevede 100–160 %) */
+body.is-touch .scalable { zoom: 1.3; }
+body.is-mobile {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+body.is-touch .remote-display { touch-action: none; }
+.ds-btn .ic.rot180 svg { transform: rotate(180deg); }
+
+/* il campo che riceve il testo della tastiera a schermo: invisibile, in alto (così la pagina non scorre) */
+.kbd-input {
+  position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0;
+  font-size: 16px; pointer-events: none; z-index: -1;
+}
+/* barra dei tasti speciali sopra la tastiera */
+.kbd-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 400;
+  display: flex; align-items: center; gap: var(--space-1); flex-wrap: nowrap; overflow-x: auto;
+  padding: var(--space-1) var(--space-2);
+  background: var(--gradient-topbar);
+  border-top: 1px solid var(--color-edge-hi); box-shadow: 0 -1px 0 var(--color-edge-lo);
+}
+.kbd-gap { flex: 1; min-width: var(--space-2); }
+
+/* uscita dallo schermo intero: solo sul touch, solo a schermo intero */
+.exit-fs { display: none; position: fixed; top: calc(var(--space-2) + env(safe-area-inset-top)); right: var(--space-2); z-index: 450; }
+body.is-touch.is-fullscreen .exit-fs { display: inline-flex; }
+
+/* schermi stretti (telefoni, tablet in verticale): barra superiore compatta */
+@media (max-width: 760px) {
+  .ds-wordmark { display: none; }
+  .ds-topbar .ds-btn > span:not(.ic) { display: none; }
+  .ds-topbar .ds-btn { padding-left: var(--space-2); padding-right: var(--space-2); }
+  .ds-topbar__right { gap: var(--space-1); }
+  body.is-mobile .ds-topbar__center { display: none; }
+  .advanced { grid-template-columns: 1fr; }
+}
+
+/* nello schermo remoto del tablet la barra mostra il nome del computer al posto del titolo */
+body.is-mobile.mode-remote .ds-wordmark { display: none; }

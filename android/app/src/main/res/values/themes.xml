@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- I colori (colors.xml) sono generati dai token dello stile LBS da packaging/mobile/prepare_assets.py -->
+<resources>
+    <style name="Theme.LBS" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@color/bg_window</item>
+        <item name="android:statusBarColor">@color/bg_topbar</item>
+        <item name="android:navigationBarColor">@color/bg_window</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

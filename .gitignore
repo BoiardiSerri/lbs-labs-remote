@@ -7,3 +7,17 @@ packaging/windows/Output/
 *.dmg
 selftest.txt
 packaging/windows/MicrosoftEdgeWebview2Setup.exe
+
+# app per tablet: file generati da packaging/mobile/prepare_assets.py
+android/app/src/main/assets/www/
+android/app/src/main/res/values/colors.xml
+android/app/src/main/res/mipmap-*/
+android/version.properties
+android/build/
+android/app/build/
+android/.gradle/
+ios/App/www/
+ios/App/Generated/
+ios/App/Assets.xcassets/AppIcon.appiconset/icon-1024.png
+ios/*.xcodeproj/
+ios/build/

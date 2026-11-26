@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>LBS Labs Remote</title>
 <!-- Stile grafico LBS Labs "Graphite hardware": token, base e componenti da LBS-Stile-Grafico/ -->
 <link rel="stylesheet" href="lbs/tokens/lbs-tokens.css">
@@ -26,6 +26,7 @@
       <span id="chip-agent" class="ds-chip ds-chip--idle" title=""><span class="ds-chip__text">THIS COMPUTER: CHECKING…</span></span>
       <span id="chip-conn" class="ds-chip ds-chip--ok hidden"><span class="ds-chip__text">CONNECTED</span></span>
       <span id="chip-control" class="ds-chip ds-chip--idle hidden"><span class="ds-chip__text">CLICK TO CONTROL</span></span>
+      <button id="btn-keyboard" class="ds-btn ds-btn--small hidden"><span class="ic" data-icon="keyboard"></span><span>Keyboard</span></button>
       <button id="btn-fullscreen" class="ds-btn ds-btn--small hidden"><span class="ic" data-icon="fullscreen"></span><span>Full screen</span></button>
       <button id="btn-disconnect" class="ds-btn ds-btn--small hidden"><span class="ic" data-icon="unlink"></span><span>Disconnect</span></button>
     </div>
@@ -117,13 +118,38 @@
     </div>
   </main>
 
+  <!-- uscita dallo schermo intero (tablet: non c'è il tasto ESC) -->
+  <button id="btn-exit-fs" class="ds-btn ds-btn--small exit-fs scalable"><span class="ic" data-icon="fullscreen"></span><span>Exit full screen</span></button>
+
   <!-- ============ barra di stato (32) con le fasce ambra ============ -->
   <footer class="ds-iobar scalable">
     <canvas id="iobar" aria-hidden="true"></canvas>
     <div class="ds-iobar__content"><div id="iomsg" class="ds-iobar__msg">Ready</div><span id="iodata" class="num"></span></div>
   </footer>
 </div>
+
+<!-- tastiera a schermo (tablet): campo nascosto che riceve il testo + barra dei tasti speciali -->
+<input id="kbd-input" class="kbd-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off"
+       spellcheck="false" enterkeyhint="enter" aria-hidden="true" tabindex="-1">
+<div id="kbd-bar" class="kbd-bar scalable hidden">
+  <button class="ds-btn ds-btn--small" data-key="esc"><span>Esc</span></button>
+  <button class="ds-btn ds-btn--small" data-key="tab"><span>Tab</span></button>
+  <button class="ds-btn ds-btn--small" data-mod="ctrl"><span>Ctrl</span></button>
+  <button class="ds-btn ds-btn--small" data-mod="alt"><span>Alt</span></button>
+  <button class="ds-btn ds-btn--small" data-mod="shift"><span>Shift</span></button>
+  <button class="ds-btn ds-btn--small" data-mod="cmd"><span>Win</span></button>
+  <span class="kbd-gap"></span>
+  <button class="ds-btn ds-btn--small ds-btn--icon" data-key="left" title="Left"><span class="ic rot180" data-icon="chevron_right"></span></button>
+  <button class="ds-btn ds-btn--small ds-btn--icon" data-key="up" title="Up"><span class="ic" data-icon="chevron_up"></span></button>
+  <button class="ds-btn ds-btn--small ds-btn--icon" data-key="down" title="Down"><span class="ic" data-icon="chevron_down"></span></button>
+  <button class="ds-btn ds-btn--small ds-btn--icon" data-key="right" title="Right"><span class="ic" data-icon="chevron_right"></span></button>
+  <span class="kbd-gap"></span>
+  <button id="kbd-done" class="ds-btn ds-btn--small ds-btn--primary"><span class="ic" data-icon="check"></span><span>Done</span></button>
+</div>
+
+<script src="bridge.js"></script>
 <script src="icons.js"></script>
+<script src="touch.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 // LBS Labs Remote – interfaccia del viewer (schermata di connessione + schermo remoto).
 // Comunica con Python tramite window.pywebview.api (viewer.py) e riceve gli eventi da LBS.onEvent().
+// Sui tablet lo stesso api è fornito dall'app nativa (bridge.js); gesti touch e tastiera a schermo: touch.js.
 'use strict'
 
 const $ = (id) => document.getElementById(id)
@@ -14,7 +15,8 @@ const S = {
   connState: 'idle',        // 'idle' | 'connecting' | 'connected' | 'reconnecting'
   host: '',
   remoteName: '',
-  focused: document.hasFocus(),
+  mobile: !!window.LBS_MOBILE,   // app per tablet/telefono (Android, iPad): tocco, niente "focus" da perdere
+  focused: !!window.LBS_MOBILE || document.hasFocus(),
   swallowUntil: 0,
   fullscreen: false,
   macCmdMonitor: false,
@@ -35,8 +37,20 @@ const S = {
 const inputQ = []
 let inputBusy = false
 
+let rafMove = null
 function sendInput(ev) {
   if (S.mode !== 'remote' || S.connState !== 'connected') return
+  if (S.mobile && ev.t === 'move') {          // un solo movimento per fotogramma
+    const first = rafMove === null
+    rafMove = ev
+    if (first) requestAnimationFrame(() => { const m = rafMove; rafMove = null; if (m) queueInput(m) })
+    return
+  }
+  if (rafMove) { queueInput(rafMove); rafMove = null }   // i clic partono dalla posizione aggiornata
+  queueInput(ev)
+}
+
+function queueInput(ev) {
   const last = inputQ[inputQ.length - 1]
   if (ev.t === 'move' && last && last.t === 'move') inputQ[inputQ.length - 1] = ev
   else inputQ.push(ev)
@@ -125,8 +139,9 @@ function showConnectScreen() {
   S.fullscreen = false
   $('screen-connect').classList.remove('hidden')
   $('screen-remote').classList.add('hidden')
-  for (const id of ['docname', 'chip-conn', 'chip-control', 'btn-fullscreen', 'btn-disconnect']) $(id).classList.add('hidden')
-  $('chip-agent').classList.remove('hidden')
+  for (const id of ['docname', 'chip-conn', 'chip-control', 'btn-fullscreen', 'btn-disconnect', 'btn-keyboard']) $(id).classList.add('hidden')
+  if (typeof kbdSetOpen === 'function') kbdSetOpen(false)
+  if (!S.mobile) $('chip-agent').classList.remove('hidden')
   $('btn-connect').disabled = false
   $('host').disabled = false
   if (S.frameUrl) { URL.revokeObjectURL(S.frameUrl); S.frameUrl = null }
@@ -146,6 +161,11 @@ function showRemoteScreen(hello) {
   $('screen-remote').classList.remove('hidden')
   $('chip-agent').classList.add('hidden')
   for (const id of ['docname', 'chip-conn', 'chip-control', 'btn-fullscreen', 'btn-disconnect']) $(id).classList.remove('hidden')
+  if (S.mobile) {
+    $('btn-keyboard').classList.remove('hidden')
+    $('chip-control').classList.add('hidden')
+    kbdSetPlatform((hello && hello.platform) || '')
+  }
   $('docname-text').textContent = S.remoteName === S.host ? S.host : `${S.remoteName}  ·  ${S.host}`
   $('remote-status').classList.add('hidden')
   setChip($('chip-conn'), 'ok', 'CONNECTED')
@@ -159,6 +179,12 @@ function showRemoteScreen(hello) {
 function updateControlState() {
   if (S.mode !== 'remote') return
   const active = S.focused && S.connState === 'connected'
+  if (S.mobile) {
+    setIoMessage(S.connState === 'connected'
+      ? 'Tap to click · drag to move · two fingers to scroll · hold for right-click'
+      : 'Reconnecting…')
+    return
+  }
   setChip($('chip-control'), active ? 'ok' : 'idle',
     active ? 'IN CONTROL' : 'CLICK TO CONTROL',
     active ? 'Mouse and keyboard go to the remote computer. Click outside this window to use your own computer.'
@@ -218,7 +244,7 @@ function remotePos(ev, clamp) {
 }
 
 function canControl() {
-  return S.mode === 'remote' && S.connState === 'connected' && S.focused
+  return S.mode === 'remote' && S.connState === 'connected' && (S.mobile || S.focused)
 }
 
 // ============================================================================
@@ -231,6 +257,7 @@ function setupPointer() {
 
   area.addEventListener('pointerdown', (ev) => {
     ev.preventDefault()
+    if (ev.pointerType === 'touch') return                            // touch.js
     if (!canControl() || performance.now() < S.swallowUntil) return   // clic di attivazione
     const name = BUTTONS[ev.button]
     if (!name) return
@@ -242,12 +269,13 @@ function setupPointer() {
   })
 
   area.addEventListener('pointermove', (ev) => {
-    if (!canControl()) return
+    if (ev.pointerType === 'touch' || !canControl()) return
     const p = remotePos(ev, true)
     if (p) sendInput({ t: 'move', x: p.x, y: p.y })
   })
 
   area.addEventListener('pointerup', (ev) => {
+    if (ev.pointerType === 'touch') return
     const name = BUTTONS[ev.button]
     if (!name || !S.buttonsDown.has(name)) return
     const n = S.buttonsDown.get(name)
@@ -318,11 +346,13 @@ function keyToWire(ev) {
 function setupKeyboard() {
   window.addEventListener('keydown', (ev) => {
     if (S.mode !== 'remote') return
+    // tastiera a schermo che non produce tasti "veri" (composizione): il testo lo gestisce touch.js
+    if (S.mobile && (ev.key === 'Unidentified' || ev.keyCode === 229 || ev.isComposing)) return
     ev.preventDefault()
     ev.stopPropagation()
-    if (ev.key === 'Escape') {                          // ESC è riservato: mai inoltrato
-      if (S.fullscreen) setFullscreen(false)
-      return
+    if (ev.key === 'Escape') {
+      if (S.fullscreen) { setFullscreen(false); return }
+      if (!S.mobile) return                             // sul desktop ESC è riservato: mai inoltrato
     }
     if (!canControl() || ev.isComposing) return
     // Mac: le scorciatoie Cmd+lettera le intercetta Python prima dei menu (viewer.py)
@@ -331,6 +361,10 @@ function setupKeyboard() {
     if (!wire) {
       wire = keyToWire(ev)
       if (!wire) return
+      if (S.mobile && typeof kbdActiveMods === 'function' && kbdActiveMods().length) {
+        kbdTap(wire)                                    // modificatori "appiccicati" della barra dei tasti
+        return
+      }
       S.keysDown.set(ev.code, wire)
     }
     sendInput({ t: 'key', d: 1, ...wire })              // anche le ripetizioni automatiche
@@ -340,7 +374,7 @@ function setupKeyboard() {
     if (S.mode !== 'remote') return
     ev.preventDefault()
     ev.stopPropagation()
-    if (ev.key === 'Escape') return
+    if (ev.key === 'Escape' && !S.mobile) return
     const wire = S.keysDown.get(ev.code)
     if (!wire) return
     S.keysDown.delete(ev.code)
@@ -363,6 +397,10 @@ function releaseAll(send = true) {
 // focus: la cattura è attiva solo quando la finestra ha il focus
 // ============================================================================
 function setupFocus() {
+  if (S.mobile) {            // su tablet non c'è un "focus" da perdere: si rilascia tutto in background
+    document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(true) })
+    return
+  }
   window.addEventListener('focus', () => {
     if (!S.focused) {
       S.focused = true
@@ -388,6 +426,7 @@ async function setFullscreen(on) {
   S.fullscreen = on
   document.body.classList.toggle('is-fullscreen', on)
   clearTimeout(hintTimer)
+  $('fs-hint').textContent = S.mobile ? 'Tap EXIT FULL SCREEN to return' : 'Press ESC to exit full screen'
   $('fs-hint').classList.toggle('hidden', !on)
   if (on) hintTimer = setTimeout(() => $('fs-hint').classList.add('hidden'), 2500)
   updateControlState()
@@ -554,6 +593,17 @@ async function init() {
   S.version = st.version || ''
   S.macCmdMonitor = !!st.mac_cmd_monitor
   if (S.platform === 'darwin') document.body.classList.add('scale-125')
+  if (S.mobile) {
+    document.body.classList.add('is-mobile', 'is-touch', `is-${window.LBS_MOBILE}`)
+    $('chip-agent').classList.add('hidden')
+    $('chip-control').classList.add('hidden')
+    setupKeyboardBar()
+    if (st.discovery === false) {
+      $('server-empty').querySelector('.ds-empty__title').textContent = 'Type the IP address'
+      $('server-empty').querySelector('.ds-empty__caption').innerHTML =
+        'Automatic search is not available on this device.<br>Enter the IP address of the computer above and tap CONNECT.'
+    }
+  }
   $('host').value = st.last_host || ''
   applySettings(st.settings)
   setIoMessage('Ready', st.version ? `v${st.version}` : '')
@@ -575,6 +625,7 @@ function setupStatic() {
   $('host').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); connect() } })
   $('btn-disconnect').addEventListener('click', disconnect)
   $('btn-fullscreen').addEventListener('click', () => setFullscreen(true))
+  $('btn-exit-fs').addEventListener('click', () => setFullscreen(false))
   $('btn-advanced').addEventListener('click', () => {
     const open = $('advanced').classList.toggle('hidden') === false
     $('btn-advanced').classList.toggle('is-open', open)
@@ -592,6 +643,7 @@ function setupStatic() {
 
 setupStatic()
 setupPointer()
+setupTouch()
 setupKeyboard()
 setupFocus()
 lbsFillIcons()

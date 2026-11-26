@@ -2,7 +2,7 @@ name: Build installer (macOS DMG + Windows Setup)
 
 on:
   push:
-    branches: [main]
+    branches: [main, mobile]    # il ramo "mobile" compila e prova tutto, ma non pubblica
   workflow_dispatch:
 
 permissions:
@@ -117,11 +117,91 @@ jobs:
           name: LBS-Labs-Remote-Windows-Setup
           path: packaging/windows/Output/LBS-Labs-Remote-Windows-Setup.exe
 
+  # ------------------------------------------------------------------ Android (APK firmato)
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Interfaccia e stile LBS nell'app
+        run: |
+          python -m pip install pillow
+          python packaging/mobile/prepare_assets.py android
+      - name: Test del codice di rete (JVM) contro l'agente di prova
+        run: |
+          sudo apt-get install -y libandroid-json-org-java >/dev/null
+          python tools/fake_agent.py --port 5970 --seconds 120 > fake_agent.log 2>&1 &
+          sleep 2
+          mkdir -p jtest
+          javac -d jtest -cp /usr/share/java/json-android.jar android/app/src/main/java/com/lbslabs/remote/{Protocol,NetSession,Discovery,AppCore}.java android/test/CoreTest.java
+          java -cp jtest:/usr/share/java/json-android.jar CoreTest ok 127.0.0.1 | tee core_test.log
+          grep -q "RESULT PASS" core_test.log
+          grep -c "INPUT" fake_agent.log
+          java -cp jtest:/usr/share/java/json-android.jar CoreTest fail 127.0.0.1 5999 | grep RESULT
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Compila e firma l'APK
+        run: gradle -p android assembleRelease --no-daemon --stacktrace
+      - name: Verifica la firma
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -1)
+          $APKSIGNER verify --verbose --print-certs "$APK" | head -8
+          cp "$APK" LBS-Labs-Remote-Android.apk
+          ls -la LBS-Labs-Remote-Android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LBS-Labs-Remote-Android
+          path: LBS-Labs-Remote-Android.apk
+
+  # Prova completa sull'emulatore Android: l'app si collega all'agente di prova, riceve i frame
+  # e un tocco sullo schermo arriva all'agente come clic. Non blocca la pubblicazione.
+  android-e2e:
+    needs: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          name: LBS-Labs-Remote-Android
+      - name: Abilita KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Agente di prova
+        run: |
+          python -m pip install pillow
+          python tools/fake_agent.py --port 5970 --seconds 900 > fake_agent.log 2>&1 &
+          sleep 2; cat fake_agent.log
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          arch: x86_64
+          profile: pixel_tablet
+          disable-animations: true
+          script: bash tools/android_e2e.sh LBS-Labs-Remote-Android.apk fake_agent.log
+      - name: Esito
+        if: always()
+        run: cat fake_agent.log | tail -30
+
   # Pubblica i file nella pagina Releases del repository (scaricabili dal browser)
   release:
-    needs: [macos, windows]
-    # si pubblica solo se entrambi i pacchetti sono riusciti: mai una versione a metà
-    if: ${{ needs.macos.result == 'success' && needs.windows.result == 'success' }}
+    needs: [macos, windows, android]
+    # si pubblica solo da main e solo se tutti i pacchetti sono riusciti: mai una versione a metà
+    if: ${{ github.ref == 'refs/heads/main' && needs.macos.result == 'success' && needs.windows.result == 'success' && needs.android.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

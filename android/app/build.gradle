@@ -1,0 +1,47 @@
+plugins {
+    id 'com.android.application'
+}
+
+// versione: packaging/mobile/prepare_assets.py scrive android/version.properties dalla versione dell'app
+def versionProps = new Properties()
+def versionFile = rootProject.file('version.properties')
+if (versionFile.exists()) versionFile.withInputStream { versionProps.load(it) }
+
+android {
+    namespace 'com.lbslabs.remote'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.lbslabs.remote'
+        minSdk 24
+        targetSdk 34
+        versionCode (versionProps.getProperty('versionCode', '1') as int)
+        versionName versionProps.getProperty('versionName', '0.0.0')
+    }
+
+    // Chiave di firma per l'installazione diretta dell'APK (non per il Play Store).
+    // Resta nel repository privato: serve a firmare sempre con la stessa chiave, così
+    // le nuove versioni si installano sopra le vecchie senza disinstallare.
+    signingConfigs {
+        release {
+            storeFile rootProject.file('lbs-labs-remote.keystore')
+            storePassword 'lbslabsremote'
+            keyAlias 'lbs'
+            keyPassword 'lbslabsremote'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+}
