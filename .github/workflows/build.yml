@@ -67,7 +67,8 @@ jobs:
           REQ=$(codesign -d -r- "$APP" 2>&1 | grep designated)
           echo "$REQ"
           # deve dipendere dall'identificativo e dal certificato, non da un hash del codice (che cambia a ogni build)
-          echo "$REQ" | grep -q 'certificate leaf' || { echo "ERRORE: firma non stabile"; exit 1; }
+          # (un certificato proprio è la radice di se stesso: compare "certificate root" invece di "leaf")
+          echo "$REQ" | grep -Eq 'certificate (leaf|root) = H' || { echo "ERRORE: firma non stabile"; exit 1; }
           echo "$REQ" | grep -q 'cdhash' && { echo "ERRORE: la firma dipende dall'hash del codice"; exit 1; }
           echo "firma stabile OK"
       - name: Autotest dell'app impacchettata (Intel)
