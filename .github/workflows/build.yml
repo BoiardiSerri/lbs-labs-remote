@@ -5,13 +5,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write   # per pubblicare i file nella pagina "Releases"
+
 jobs:
   macos:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-15          # Mac con chip Apple (M1/M2/M3/M4)
+          - runner: macos-latest      # Mac con chip Apple (M1/M2/M3/M4)
             arch: AppleSilicon
           - runner: macos-15-intel    # Mac con processore Intel
             arch: Intel
@@ -71,3 +74,34 @@ jobs:
         with:
           name: LBS-Labs-Remote-Windows-Setup
           path: packaging/windows/Output/LBS-Labs-Remote-Windows-Setup.exe
+
+  # Pubblica i file nella pagina Releases del repository (scaricabili dal browser)
+  release:
+    needs: [macos, windows]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(python3 -c "import lbsremote; print(lbsremote.__version__)")
+          TAG="v$VERSION"
+          ls -la artifacts
+          NOTES="Scarica il file per il tuo computer:
+          - Mac con chip Apple (M1/M2/M3/M4): LBS-Labs-Remote-macOS-AppleSilicon.dmg
+          - Mac con processore Intel: LBS-Labs-Remote-macOS-Intel.dmg
+          - Windows: LBS-Labs-Remote-Windows-Setup.exe
+
+          Build del $(date -u '+%d/%m/%Y %H:%M') UTC (commit ${GITHUB_SHA::7})."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes "$NOTES"
+          else
+            gh release create "$TAG" --title "LBS Labs Remote $VERSION" --notes "$NOTES"
+          fi
+          gh release upload "$TAG" artifacts/* --clobber
