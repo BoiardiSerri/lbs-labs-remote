@@ -149,10 +149,17 @@ class ClientSession:
             for text in warnings:
                 self.send_json(MSG_NOTICE, {"level": "warning", "text": text})
 
-            threading.Thread(target=self._run_video, name=f"video-{self.ip}", daemon=True).start()
-
+            activated = False
             while not self.closed:
                 msg_type, payload = recv_message(self.sock)
+                if not activated:
+                    # Un vero client invia subito un messaggio (ping/config): solo allora
+                    # diventa la sessione attiva. Chi legge solo l'HELLO e chiude (es. la
+                    # verifica "l'agente è già avviato?") non disturba la sessione in corso.
+                    activated = True
+                    self.server._activate(self)
+                    threading.Thread(target=self._run_video, name=f"video-{self.ip}",
+                                     daemon=True).start()
                 if msg_type == MSG_INPUT:
                     if self.injector is not None:
                         try:
@@ -283,6 +290,22 @@ class ClientSession:
             self.close()
 
 
+def probe_agent(port: int, timeout: float = 2.0) -> str:
+    """Chi risponde su localhost:port? "agent" (LBS Labs Remote), "other" o "none"."""
+    try:
+        with socket.create_connection(("127.0.0.1", port), timeout=timeout) as s:
+            s.settimeout(timeout)
+            first = s.recv(8, socket.MSG_PEEK)
+            if not first or first.startswith(b"RFB"):
+                return "other"
+            msg_type, payload = recv_message(s)
+            if msg_type == MSG_HELLO and decode_json(payload).get("app") == APP_ID:
+                return "agent"
+    except (OSError, ConnectionClosed, ProtocolError, ValueError, AttributeError):
+        return "none"
+    return "other"
+
+
 class AgentServer:
     """Accetta un client alla volta e annuncia la propria presenza in LAN."""
 
@@ -296,6 +319,7 @@ class AgentServer:
         self._stopping = False
         self.error: str | None = None
         self.port_in_use = False
+        self.port_owner = "none"     # dopo un errore di avvio: "agent", "other" o "none"
         self.permission_problems: list[str] = []
 
     # --- stato per la UI ---
@@ -328,8 +352,13 @@ class AgentServer:
         except OSError as exc:
             s.close()
             self.port_in_use = True
-            self.error = (f"Porta {self.settings.port} già in uso o non disponibile ({exc}). "
-                          "L'agente è forse già in esecuzione?")
+            self.port_owner = probe_agent(self.settings.port)
+            if self.port_owner == "agent":
+                self.error = "LBS Labs Remote è già in esecuzione su questo computer."
+            else:
+                self.error = (f"La porta {self.settings.port} è già usata da un altro programma su "
+                              "questo computer, quindi gli altri PC non possono controllarlo. "
+                              "Chiudi quel programma oppure scegli un'altra porta.")
             self._notify_status()
             raise OSError(self.error) from exc
         s.listen(4)
@@ -367,17 +396,19 @@ class AgentServer:
                     return
                 time.sleep(0.5)
                 continue
-            new = ClientSession(self, conn, addr)
-            with self._lock:
-                old, self.session = self.session, new
-            if old and not old.closed:
-                # Un solo client alla volta: l'ultimo che si connette prende il
-                # controllo (evita di restare bloccati da una connessione "zombie").
-                log.info("nuovo client %s: chiudo la sessione di %s", new.ip, old.ip)
-                old.close(f"Il controllo è stato preso da un altro client ({new.ip}).")
-            log.info("client connesso da %s", new.ip)
-            new.start()
-            self._notify_status()
+            ClientSession(self, conn, addr).start()
+
+    def _activate(self, new: ClientSession) -> None:
+        """La sessione `new` diventa quella attiva (un solo client alla volta)."""
+        with self._lock:
+            old, self.session = self.session, new
+        if old and old is not new and not old.closed:
+            # L'ultimo client che si connette prende il controllo: evita di restare
+            # bloccati da una connessione "zombie".
+            log.info("nuovo client %s: chiudo la sessione di %s", new.ip, old.ip)
+            old.close(f"Il controllo è stato preso da un altro client ({new.ip}).")
+        log.info("client connesso da %s", new.ip)
+        self._notify_status()
 
     def _session_ended(self, session: ClientSession) -> None:
         with self._lock:

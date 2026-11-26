@@ -31,7 +31,7 @@ def parse_args(argv=None):
         description=f"{APP_NAME} – controllo remoto in LAN. La stessa app su tutti i PC: "
                     "rende controllabile questo PC (icona nella tray/menu bar) e permette "
                     "di controllarne altri.")
-    p.add_argument("host", nargs="?", help="PC a cui connettersi subito (es. 192.168.1.50 o 192.168.1.50:5900)")
+    p.add_argument("host", nargs="?", help="PC a cui connettersi subito (es. 192.168.1.50 o 192.168.1.50:5970)")
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--agent", action="store_true",
                       help="solo agente in background (icona), nessuna finestra: per il PC da controllare")
@@ -41,7 +41,7 @@ def parse_args(argv=None):
     mode.add_argument("--uninstall-autostart", action="store_true", help="rimuovi l'avvio al login ed esci")
 
     g = p.add_argument_group("opzioni dell'agente")
-    g.add_argument("--port", type=int, help="porta TCP di ascolto (predefinita 5900)")
+    g.add_argument("--port", type=int, help="porta TCP di ascolto (predefinita 5970)")
     g.add_argument("--discovery-port", type=int, help="porta UDP degli annunci (predefinita 5901)")
     g.add_argument("--fps", type=int, help="frame al secondo (predefinito 12)")
     g.add_argument("--quality", type=int, help="qualità JPEG 10-95 (predefinita 50)")
@@ -54,33 +54,36 @@ def parse_args(argv=None):
     g.add_argument("--save", action="store_true", help="salva queste opzioni in ~/.lbslabs-remote/server.json")
     p.add_argument("-v", "--verbose", action="store_true", help="log dettagliato")
     p.add_argument("--selftest", metavar="FILE", help=argparse.SUPPRESS)
+    p.add_argument("--notice", help=argparse.SUPPRESS)   # avviso da mostrare nella finestra
     # parse_known_args: macOS può passare argomenti propri (es. -psn_0_123) alle app
     args, _unknown = p.parse_known_args(argv)
     return args
 
 
-def viewer_command(host: str | None = None) -> list[str]:
+def viewer_command(host: str | None = None, notice: str | None = None) -> list[str]:
     if getattr(sys, "frozen", False):          # eseguibile impacchettato (es. PyInstaller)
         cmd = [sys.executable, "--viewer"]
     else:
         cmd = [sys.executable, str(APP_SCRIPT), "--viewer"]
+    if notice:
+        cmd += ["--notice", notice]
     if host:
         cmd.append(host)
     return cmd
 
 
-def spawn_viewer(host: str | None = None) -> None:
+def spawn_viewer(host: str | None = None, notice: str | None = None) -> None:
     """Apre la finestra "Connetti" in un nuovo processo."""
     try:
         cwd = None if getattr(sys, "frozen", False) else str(APP_SCRIPT.parent)
-        subprocess.Popen(viewer_command(host), cwd=cwd, close_fds=True)
+        subprocess.Popen(viewer_command(host, notice), cwd=cwd, close_fds=True)
     except OSError:
         log.exception("impossibile aprire la finestra di connessione")
 
 
-def run_viewer(host: str | None) -> None:
+def run_viewer(host: str | None, notice: str | None = None) -> None:
     from .client import ClientApp
-    ClientApp(host).run()
+    ClientApp(host, notice=notice).run()
 
 
 def selftest(path: str) -> None:
@@ -166,7 +169,7 @@ def main(argv=None) -> None:
 
     if args.viewer:
         setup_logging(args.verbose, "viewer.log")
-        run_viewer(args.host)
+        run_viewer(args.host, args.notice)
         return
 
     setup_logging(args.verbose, "agent.log")
@@ -174,12 +177,12 @@ def main(argv=None) -> None:
     server, start_error = create_agent(build_settings(args))
 
     if not args.agent:
-        if start_error and server.port_in_use:
-            # Probabilmente l'agente è già attivo (es. avviato al login):
-            # basta aprire la finestra di connessione.
+        if start_error and server.port_in_use and server.port_owner == "agent":
+            # L'app è già attiva (es. avviata al login): basta aprire la finestra.
             log.info("agente già attivo: apro solo la finestra di connessione")
             run_viewer(args.host)
             return
-        spawn_viewer(args.host)
+        # se l'agente non è partito (porta occupata da un altro programma) lo si dice subito
+        spawn_viewer(args.host, notice=start_error)
 
     run_agent_ui(server, start_error, use_tray=not args.no_tray, open_viewer=spawn_viewer)

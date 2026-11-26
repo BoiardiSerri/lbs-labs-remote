@@ -32,7 +32,7 @@ class ProtocolTest(unittest.TestCase):
             p.recv_message(b)
 
     def test_parse_host_port(self):
-        self.assertEqual(p.parse_host_port("192.168.1.5"), ("192.168.1.5", 5900))
+        self.assertEqual(p.parse_host_port("192.168.1.5"), ("192.168.1.5", 5970))
         self.assertEqual(p.parse_host_port(" 10.0.0.2:6000 "), ("10.0.0.2", 6000))
         self.assertEqual(p.parse_host_port("demo-pc", 7000), ("demo-pc", 7000))
         with self.assertRaises(ValueError):

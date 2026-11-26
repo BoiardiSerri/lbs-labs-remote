@@ -32,7 +32,7 @@ from . import platform_utils as pu
 from .config import load_json, save_json
 from .discovery import DiscoveryListener, local_ipv4_addresses
 from .keymap import tk_key_to_wire
-from .protocol import (APP_ID, DEFAULT_PORT, DISCOVERY_PORT, MSG_BYE, MSG_CONFIG, MSG_FRAME,
+from .protocol import (APP_ID, DEFAULT_PORT, LEGACY_DEFAULT_PORT, describe_foreign_service, DISCOVERY_PORT, MSG_BYE, MSG_CONFIG, MSG_FRAME,
                        MSG_HELLO, MSG_INPUT, MSG_NOTICE, MSG_PING, MSG_PONG, ConnectionClosed,
                        ProtocolError, configure_socket, decode_json, encode_json,
                        parse_host_port, recv_message, send_json, send_message)
@@ -146,10 +146,18 @@ class NetSession:
         try:
             sock = socket.create_connection((self.host, self.port), timeout=CONNECT_TIMEOUT)
             configure_socket(sock, RECV_TIMEOUT)
-            msg_type, payload = recv_message(sock)
+            first = sock.recv(8, socket.MSG_PEEK)
+            if not first:
+                raise ConnectionClosed("il computer remoto ha chiuso subito la connessione")
+            if first.startswith(b"RFB") or first[:4] in (b"HTTP", b"SSH-"):
+                raise ProtocolError(describe_foreign_service(first, self.port))
+            try:
+                msg_type, payload = recv_message(sock)
+            except ProtocolError:
+                raise ProtocolError(describe_foreign_service(first, self.port))
             hello = decode_json(payload) if msg_type == MSG_HELLO else {}
             if hello.get("app") != APP_ID:
-                raise ProtocolError("sulla porta indicata non risponde un agente LBS Labs Remote")
+                raise ProtocolError(describe_foreign_service(b"", self.port))
             if self.remote_config:
                 send_json(sock, MSG_CONFIG, self.remote_config)
         except socket.timeout:
@@ -667,13 +675,15 @@ class Viewer:
 # =============================================================================
 
 class ClientApp:
-    def __init__(self, initial_host: str | None = None):
+    def __init__(self, initial_host: str | None = None, notice: str | None = None):
         # "system aware": Tk 8.6 non gestisce il cambio di DPI fra monitor
         pu.enable_windows_dpi_awareness(per_monitor=False)
         self.root = tk.Tk()
         self.root.title(APP_NAME)
         self.root.resizable(False, False)
         self.cfg = load_json(CLIENT_CONFIG, DEFAULT_CONFIG)
+        if str(self.cfg.get("port")) == str(LEGACY_DEFAULT_PORT):   # aggiornamento dalla 1.0.0
+            self.cfg["port"] = DEFAULT_PORT
         self.events: queue.Queue = queue.Queue()
         self.session: NetSession | None = None
         self.viewer: Viewer | None = None
@@ -697,6 +707,8 @@ class ClientApp:
             self.root.createcommand("::tk::mac::Quit", self._mac_quit)
         self.root.after(15, self._poll)
         self.root.after(300, self._refresh_servers)
+        if notice:
+            self.show_message("⚠ Questo computer non può essere controllato da altri PC: " + notice)
         if initial_host:
             self.ip_var.set(initial_host)
             self.root.after(100, self.connect_from_entry)

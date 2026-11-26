@@ -43,7 +43,8 @@ import struct
 APP_ID = "lbslabs-remote"
 PROTOCOL_VERSION = 1
 
-DEFAULT_PORT = 5900        # TCP: sessione di controllo remoto
+DEFAULT_PORT = 5970        # TCP: sessione di controllo remoto
+LEGACY_DEFAULT_PORT = 5900 # porta della versione 1.0.0 (in conflitto con VNC / Condivisione schermo)
 DISCOVERY_PORT = 5901      # UDP: annunci broadcast per l'auto-discovery
 
 MAX_MESSAGE_SIZE = 64 * 1024 * 1024
@@ -126,12 +127,22 @@ def recv_message(sock: socket.socket) -> tuple[int, bytes]:
     return msg_type, payload
 
 
+def describe_foreign_service(first_bytes: bytes, port: int) -> str:
+    """Messaggio chiaro quando sulla porta risponde un programma diverso da LBS Labs Remote."""
+    if first_bytes.startswith(b"RFB"):
+        return (f"sulla porta {port} risponde un altro programma di controllo remoto (VNC, ad es. "
+                "la Condivisione schermo di macOS), non LBS Labs Remote. Aggiorna LBS Labs Remote "
+                "su entrambi i computer all'ultima versione oppure disattiva la Condivisione schermo "
+                "sul computer remoto.")
+    return f"sulla porta {port} risponde un altro programma, non LBS Labs Remote."
+
+
 def parse_host_port(text: str, default_port: int = DEFAULT_PORT) -> tuple[str, int]:
     """'192.168.1.5' -> ('192.168.1.5', default); '192.168.1.5:6000' -> (.., 6000)."""
     text = text.strip()
     if not text:
         raise ValueError("indirizzo vuoto")
-    if text.startswith("["):  # IPv6 [::1]:5900
+    if text.startswith("["):  # IPv6 [::1]:5970
         host, _, rest = text[1:].partition("]")
         port = int(rest[1:]) if rest.startswith(":") else default_port
         return host, port

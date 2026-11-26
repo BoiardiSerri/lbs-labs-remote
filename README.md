@@ -89,7 +89,7 @@ Su macOS usa `python3`.
 ### Sul PC da controllare (PC demo)
 Avvia `python lbs_labs_remote.py --agent`, oppure attiva l'**avvio automatico al login** (§4).
 Compare un'icona nella tray (Windows) o nella menu bar (macOS) con:
-- lo stato: *in ascolto sulla porta 5900* oppure *client connesso da 192.168.1.20*;
+- lo stato: *in ascolto sulla porta 5970* oppure *client connesso da 192.168.1.20*;
 - gli **indirizzi IP** del PC (utili se l'auto-discovery non lo trova);
 - **Connetti a un PC remoto…** (su Windows basta un doppio clic sull'icona);
 - **Avvia al login** (casella da spuntare);
@@ -220,7 +220,7 @@ Note:
 
 ## 6. Rete e firewall
 
-- Porte predefinite: **TCP 5900** (sessione) e **UDP 5901** (auto-discovery).
+- Porte predefinite: **TCP 5970** (sessione) e **UDP 5901** (auto-discovery).
   Per cambiarle: `--port N --discovery-port M --save` sull'agente e *Impostazioni avanzate > Porta*
   sul viewer (oppure `IP:porta` nel campo).
 - **Windows**: al primo avvio, Windows Defender Firewall chiede se consentire a Python l'accesso
@@ -229,17 +229,18 @@ Note:
   "Privata" o consenti anche quella.
 - **macOS**: se il firewall è attivo, alla prima connessione compare "Consentire a Python di
   accettare connessioni in entrata?" → *Consenti*.
-- La porta 5900 è la stessa di VNC e della *Condivisione schermo* di macOS. Se una di queste
-  è attiva, l'agente segnala *"Porta 5900 già in uso"*: in quel caso usa un'altra porta
-  (es. `--port 5910 --save`).
-
+- La porta 5970 è scelta apposta per non entrare in conflitto con VNC e con la *Condivisione
+  schermo* di macOS, che usano la 5900. Se un altro programma occupa comunque la porta, l'app lo
+  segnala nella finestra di connessione e l'icona diventa rossa: in quel caso usa un'altra porta
+  (`--port N --save` sull'agente, *Impostazioni avanzate > Porta* sul viewer).
+- Le versioni 1.0.0 usavano la porta 5900: aggiorna l'app su **tutti** i computer.
 ---
 
 ## 7. Opzioni dell'agente
 
 ```text
 python lbs_labs_remote.py --agent [opzioni]
-  --port N            porta TCP (predefinita 5900)
+  --port N            porta TCP (predefinita 5970)
   --discovery-port N  porta UDP degli annunci (5901)
   --fps N             fotogrammi al secondo (12)
   --quality N         qualità JPEG 10-95 (50, medio-bassa per privilegiare la fluidità)
