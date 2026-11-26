@@ -287,9 +287,13 @@ jobs:
           VERSION=$(python3 -c "import lbsremote; print(lbsremote.__version__)")
           TAG="v$VERSION"
           ls -la artifacts
-          NOTES="Download the file for your computer:
+          NOTES="Download the file for your device:
           - Mac (all models: Apple silicon M1/M2/M3/M4 and Intel, Universal app): LBS-Labs-Remote-macOS.dmg
           - Windows: LBS-Labs-Remote-Windows-Setup.exe
+          - Android phone or tablet: LBS-Labs-Remote-Android.apk (allow installing from this source when asked)
+          - iPad / iPhone: LBS-Labs-Remote-iPad.ipa (not signed: install it with Sideloadly or AltStore, see README)
+
+          Mac and Windows can control and be controlled. Android and iPad are viewers: they control Mac and Windows computers.
 
           Built on $(date -u '+%Y-%m-%d %H:%M') UTC (commit ${GITHUB_SHA::7})."
           if gh release view "$TAG" >/dev/null 2>&1; then

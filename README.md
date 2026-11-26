@@ -40,9 +40,43 @@ Doppio clic sull'app mentre è già attiva = si apre la finestra di connessione.
 **In pratica**: installata l'app su tutti i PC, sul computer di controllo basta aprire LBS Labs
 Remote, scrivere l'indirizzo IP (o scegliere il PC dall'elenco) e premere Invio.
 
+### Android (telefoni e tablet) — `LBS-Labs-Remote-Android.apk`
+Sui tablet l'app è un **viewer**: serve a controllare Mac e Windows (iOS e Android non permettono a
+un'app di essere controllata dall'esterno).
+1. Scarica il file `.apk` dal tablet (browser o app GitHub) e aprilo.
+2. Android chiede di consentire l'installazione da quella app (*Installa app sconosciute*): consenti.
+   Se compare un avviso di Play Protect, scegli *Installa comunque*.
+3. Apri **LBS Labs Remote**, scrivi l'indirizzo IP del computer (o scegli un PC dall'elenco) e tocca
+   **CONNECT**. Le versioni nuove si installano sopra le vecchie, senza disinstallare.
+
+### iPad e iPhone — `LBS-Labs-Remote-iPad.ipa`
+Apple non permette di installare app fuori dall'App Store senza una firma. Il file `.ipa` è **non
+firmato**: va firmato al momento dell'installazione con un programma gratuito, usando il tuo ID Apple.
+- **Sideloadly** (Mac e Windows, <https://sideloadly.io>): collega l'iPad al computer con il cavo,
+  trascina il file `.ipa` nella finestra, inserisci il tuo ID Apple e premi *Start*. Poi sull'iPad:
+  *Impostazioni → Generali → VPN e gestione dispositivo* → tocca il tuo ID Apple → **Autorizza**.
+- **AltStore** (<https://altstore.io>): installa AltServer sul computer, poi AltStore sull'iPad e
+  apri il `.ipa` da lì.
+
+Limiti dell'ID Apple gratuito: l'app **scade dopo 7 giorni** (va reinstallata con lo stesso
+programma, che può farlo da solo se il computer è acceso sulla stessa rete) e si possono avere al
+massimo 3 app così installate. Con l'**Apple Developer Program** (99 $/anno) l'app dura un anno e si
+distribuisce con TestFlight: se ti interessa, lo si può configurare nella build automatica.
+La prima volta che ti colleghi, iPadOS chiede il permesso **Rete locale**: tocca *Consenti*.
+Su iPad la ricerca automatica dei computer non è disponibile (Apple richiede un permesso speciale):
+si scrive l'indirizzo IP, che resta salvato per le volte successive.
+
+### Usare il tablet
+- **Tocco** = clic · **doppio tocco** = doppio clic · **trascinare** = trascinamento (fader, selezioni)
+- **Tocco lungo** o **tocco con due dita** = clic destro · **due dita che scorrono** = rotella
+- **KEYBOARD** apre la tastiera a schermo con una barra di tasti speciali (Esc, Tab, Ctrl, Alt, Shift,
+  Win/Cmd, frecce). I modificatori valgono per un solo tasto: tocca *CTRL*, poi una lettera.
+  Una tastiera fisica (Bluetooth o Smart Keyboard) funziona direttamente.
+- **FULL SCREEN** nasconde le barre; **EXIT FULL SCREEN** (in alto a destra) le riporta.
+
 ### Come vengono creati i pacchetti
 Il workflow `.github/workflows/build.yml` li costruisce automaticamente su GitHub Actions
-(Mac Universale e Windows) a ogni push sul ramo `main`; i file vengono pubblicati nella
+(Mac Universale, Windows, Android e iPad) a ogni push sul ramo `main`; i file vengono pubblicati nella
 pagina *Releases* del repository. In locale, sulla piattaforma di destinazione:
 ```bash
 pip install -r requirements.txt pyinstaller
@@ -320,6 +354,10 @@ LBS-Stile-Grafico/       stile grafico LBS Labs (token, CSS, font Barlow, logo, 
 CLAUDE.md               istruzioni per chi lavora al progetto (compreso lo stile obbligatorio)
 tests/test_protocol.py  test senza display: python -m unittest discover -s tests
 packaging/              PyInstaller (.spec), icone, script DMG (macOS), installer Inno Setup (Windows)
+packaging/mobile/       prepare_assets.py: copia interfaccia e stile LBS nelle app Android/iPad
+android/                app Android (Java): codice di rete, WebView, Gradle, chiave di firma
+ios/                    app iPad/iPhone (Swift): rete con socket POSIX, WKWebView, XcodeGen
+tools/                  agente di prova (fake_agent.py) e script delle prove su emulatore/simulatore
 .github/workflows/      build automatica di DMG e installer
 ```
 

@@ -5,6 +5,13 @@ Controllo remoto in LAN (Mac/Windows). Stessa app su tutti i PC: agente (icona t
 interfaccia web in `lbsremote/ui/` mostrata con pywebview). Build automatica di DMG e installer
 Windows con `.github/workflows/build.yml`, pubblicati nella pagina Releases.
 
+- App per tablet: `android/` (Java) e `ios/` (Swift) mostrano la **stessa interfaccia web** (`lbsremote/ui/`,
+  con `bridge.js` e `touch.js`) e implementano lo stesso "api" del desktop (`viewer.py`) con la logica di rete
+  portata da `client.py`. I tablet sono solo viewer. `packaging/mobile/prepare_assets.py` copia interfaccia e
+  stile LBS nelle app a ogni build (niente copie nel repository). Se cambi il protocollo (`protocol.py`) o
+  l'`api` dell'interfaccia, aggiorna **tutte e tre** le implementazioni (Python, Java, Swift).
+- `tools/fake_agent.py` è un agente di prova per le prove automatiche (emulatore Android, simulatore iPad).
+- Il ramo `mobile` compila e prova tutto senza pubblicare; si pubblica solo da `main`.
 - Interfaccia in **inglese** (testi visibili all'utente); commenti e documentazione in italiano.
 - L'interfaccia usa direttamente `LBS-Stile-Grafico/tokens`, `css`, `font`, `logo`, `icone`
   (serviti dal server locale del viewer sotto `/lbs/`): non duplicare quei file.
