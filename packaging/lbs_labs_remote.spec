@@ -29,9 +29,16 @@ a = Analysis(
     [os.path.join(ROOT, "lbs_labs_remote.py")],
     pathex=[ROOT],
     hiddenimports=hidden,
-    excludes=["pystray._gtk", "pystray._appindicator", "gi"] if sys.platform != "linux" else [],
+    excludes=(["pystray._gtk", "pystray._appindicator", "pystray._xorg", "gi", "mss.linux"]
+              if sys.platform != "linux" else []),
     noarchive=False,
 )
+if sys.platform != "linux":
+    # Librerie X11/XCB (solo Linux) che PyInstaller può trovare installate sul sistema
+    # di build tramite il backend Linux di mss: inutili su Mac e Windows.
+    a.binaries = [b for b in a.binaries
+                  if not os.path.basename(b[0]).startswith(("libX", "libxcb"))]
+
 pyz = PYZ(a.pure)
 
 version_info = None
