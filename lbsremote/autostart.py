@@ -64,7 +64,8 @@ def enable() -> str:
             "Label": MAC_LABEL,
             "ProgramArguments": args,
             "RunAtLoad": True,
-            "KeepAlive": {"SuccessfulExit": False},   # riavvia solo dopo un crash
+            # riavvia solo dopo un crash vero (non quando l'utente chiude l'app o la termina per aggiornarla)
+            "KeepAlive": {"Crashed": True},
             "ProcessType": "Interactive",
             "LimitLoadToSessionType": "Aqua",
             "StandardOutPath": log_path,
@@ -80,6 +81,20 @@ def enable() -> str:
             winreg.SetValueEx(key, WIN_VALUE_NAME, 0, winreg.REG_SZ, command)
         return f"Start at login enabled: {command}"
     raise OSError("start at login is supported only on Windows and macOS")
+
+
+def refresh() -> bool:
+    """Riscrive la definizione dell'avvio automatico se è attivo e diversa da quella attuale."""
+    if sys.platform == "darwin" and MAC_PLIST.exists():
+        try:
+            with open(MAC_PLIST, "rb") as fh:
+                current = plistlib.load(fh)
+        except (OSError, plistlib.InvalidFileException):
+            current = {}
+        if current.get("KeepAlive") != {"Crashed": True} or current.get("ProgramArguments") != _program_arguments():
+            enable()
+            return True
+    return False
 
 
 def disable() -> str:

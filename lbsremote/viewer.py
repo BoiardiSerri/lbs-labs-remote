@@ -190,6 +190,10 @@ class Api:
     def restart_app(self):
         return pu.mac_relaunch()
 
+    def quit_app(self):
+        """Esce da tutto: agente (non si potrà più controllare questo computer) e finestre."""
+        pu.quit_all_processes()
+
 
 # =============================================================================
 # applicazione

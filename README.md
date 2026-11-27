@@ -40,6 +40,16 @@ Doppio clic sull'app mentre è già attiva = si apre la finestra di connessione.
 **In pratica**: installata l'app su tutti i PC, sul computer di controllo basta aprire LBS Labs
 Remote, scrivere l'indirizzo IP (o scegliere il PC dall'elenco) e premere Invio.
 
+### Aggiornare l'app
+L'app resta attiva in background (di proposito): per questo il sistema la considera "in uso" e non
+permette di sostituirla. Prima di aggiornare, esci da tutto:
+- **Mac**: icona nella barra dei menu → **Quit**; oppure apri l'app e premi **Quit app** nella finestra
+  (premilo due volte: lo chiede per conferma). Su MacBook con notch l'icona può essere nascosta se ci sono
+  molte icone: usa il pulsante nella finestra.
+- **Terminale** (Mac): `"/Applications/LBS Labs Remote.app/Contents/MacOS/LBSLabsRemote" --quit`
+- **Windows**: l'installer chiude da solo l'app prima di aggiornarla, non serve fare nulla.
+Dopo l'aggiornamento riapri l'app: riparte da sola anche a ogni accensione.
+
 ### Android (telefoni e tablet) — `LBS-Labs-Remote-Android.apk`
 Sui tablet l'app è un **viewer**: serve a controllare Mac e Windows (iOS e Android non permettono a
 un'app di essere controllata dall'esterno).

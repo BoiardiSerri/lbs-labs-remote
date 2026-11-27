@@ -37,6 +37,8 @@ def parse_args(argv=None):
                       help="background agent only (icon), no window: for the computer to be controlled")
     mode.add_argument("--viewer", action="store_true",
                       help="connection window only: this computer does NOT become controllable")
+    mode.add_argument("--quit", action="store_true",
+                      help="quit the running agent and every window of this app, then exit (use it before updating)")
     mode.add_argument("--install-autostart", action="store_true", help="start the agent at login, then exit")
     mode.add_argument("--uninstall-autostart", action="store_true", help="remove start at login, then exit")
 
@@ -84,6 +86,17 @@ def spawn_viewer(host: str | None = None, notice: str | None = None) -> None:
 def run_viewer(host: str | None, notice: str | None = None) -> None:
     from .viewer import run
     run(host, notice)
+
+
+def refresh_autostart() -> None:
+    """Se l'avvio automatico è attivo, ne riscrive la definizione con le impostazioni correnti
+    (es. il percorso dell'app o le regole di riavvio cambiate da un aggiornamento)."""
+    if not getattr(sys, "frozen", False) or not autostart.is_supported():
+        return
+    try:
+        autostart.refresh()
+    except OSError:
+        log.debug("aggiornamento dell'avvio automatico fallito", exc_info=True)
 
 
 def ensure_autostart_first_run() -> None:
@@ -178,6 +191,10 @@ def main(argv=None) -> None:
                                 "window, then open it from there.")
         return
 
+    if args.quit:
+        pu.quit_all_processes()
+        return
+
     if args.install_autostart or args.uninstall_autostart:
         setup_logging(args.verbose, "app.log")
         try:
@@ -194,6 +211,7 @@ def main(argv=None) -> None:
 
     setup_logging(args.verbose, "agent.log")
     ensure_autostart_first_run()
+    refresh_autostart()
     pu.enable_windows_dpi_awareness()          # prima di qualunque cattura dello schermo
     server, start_error = create_agent(build_settings(args))
 

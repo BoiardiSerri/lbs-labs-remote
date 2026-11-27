@@ -182,6 +182,33 @@ def mac_app_bundle() -> str | None:
     return exe[:i + 4] if IS_MAC and getattr(sys, "frozen", False) and i > 0 else None
 
 
+def quit_all_processes() -> None:
+    """Chiude l'agente e tutte le finestre dell'app (anche il processo che la chiama), senza riavviarli.
+
+    Serve per aggiornare l'app: finché l'agente è attivo in background, il sistema considera l'app "in uso"
+    e non permette di sostituirla. Termina il processo chiamante come ultima cosa.
+    """
+    me = os.getpid()
+    frozen = getattr(sys, "frozen", False)
+    try:
+        if IS_WINDOWS:
+            subprocess.run(["taskkill", "/F", "/FI", f"PID ne {me}", "/IM", "LBSLabsRemote.exe"],
+                           capture_output=True, timeout=15, creationflags=0x08000000)   # CREATE_NO_WINDOW
+        else:
+            if IS_MAC:
+                # l'avvio automatico (launchd) altrimenti riaprirebbe subito l'agente appena chiuso
+                subprocess.run(["/bin/launchctl", "bootout", f"gui/{os.getuid()}/com.lbslabs.remote.agent"],
+                               capture_output=True, timeout=15)
+            pattern = ["-x", "LBSLabsRemote"] if frozen else ["-f", "lbs_labs_remote.py"]
+            out = subprocess.run(["pgrep", *pattern], capture_output=True, text=True, timeout=10).stdout.split()
+            for pid in out:
+                if pid.isdigit() and int(pid) != me:
+                    os.kill(int(pid), signal.SIGTERM)
+    except (OSError, subprocess.SubprocessError):
+        log.debug("chiusura degli altri processi fallita", exc_info=True)
+    os._exit(0)
+
+
 def mac_relaunch() -> bool:
     """Chiude tutti i processi dell'app (agente e finestre) e la riapre: serve dopo aver concesso
     "Registrazione schermo", che macOS applica solo ai processi avviati dopo."""

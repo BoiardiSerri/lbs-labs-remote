@@ -572,6 +572,21 @@ async function refreshPermissions() {
   }
 }
 
+// Uscita completa (agente compreso): in due passaggi, perché poi questo computer non è più controllabile
+function setupQuitButton() {
+  const btn = $('btn-quit')
+  if (S.mobile || !S.api || typeof S.api.quit_app !== 'function') return
+  btn.classList.remove('hidden')
+  let armed = null
+  const label = btn.querySelector('span:not(.ic)')
+  btn.addEventListener('click', () => {
+    if (armed) { clearTimeout(armed); S.api.quit_app(); return }
+    label.textContent = 'Click again to quit'
+    btn.title = 'This stops the background part too: other computers will not be able to control this one until you open the app again.'
+    armed = setTimeout(() => { armed = null; label.textContent = 'Quit app' }, 4000)
+  })
+}
+
 function setupPermissionPanel() {
   document.querySelectorAll('#perm-panel [data-allow]').forEach((b) => b.addEventListener('click', () => {
     if (S.api && S.api.request_permission) S.api.request_permission(b.dataset.allow)
@@ -656,6 +671,7 @@ async function init() {
   }
   refreshServers()
   setupPermissionPanel()
+  setupQuitButton()
 }
 
 function setupStatic() {

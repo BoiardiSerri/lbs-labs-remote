@@ -157,10 +157,11 @@ def dmg_background(s: float) -> Image.Image:
     # istruzioni per il primo avvio
     cap = font("Regular", 12 * s)
     for i, line in enumerate(("Then open LBS Labs Remote from Applications.",
-                              "First time only: if macOS cannot verify the app, open System Settings ›",
-                              "Privacy & Security and click Open Anyway.")):
+                              "Updating? The app runs in the background: first choose Quit from its menu bar icon,",
+                              "or click Quit app in its window. Then replace it.",
+                              "First time only: if macOS cannot verify it, open System Settings › Privacy & Security › Open Anyway.")):
         tw = d.textlength(line, font=cap)
-        d.text(((W - tw) / 2, (326 + i * 17) * s), line, font=cap, fill=c("text-muted"))
+        d.text(((W - tw) / 2, (320 + i * 15) * s), line, font=cap, fill=c("text-muted"))
     iobar(img, 32 * s, s)
     return img.convert("RGB")
 
