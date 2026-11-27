@@ -338,7 +338,7 @@ class ViewerApp:
         elif kind == "notice":
             notice = data if isinstance(data, dict) else {}
             self.push({"type": "notice", "level": notice.get("level", "warning"),
-                       "text": str(notice.get("text", ""))})
+                       "text": str(notice.get("text", "")), "id": str(notice.get("id", ""))})
 
     # --- finestra ---
     def _screen_size(self) -> tuple[int, int]:

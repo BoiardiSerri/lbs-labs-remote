@@ -528,9 +528,12 @@ window.LBS = {
         $('remote-status').classList.add('hidden')
         updateControlState()
         break
-      case 'notice':
-        addBanner($('remote-banners'), ev.level === 'info' ? 'info' : 'warn', ev.text)
+      case 'notice': {
+        // un avviso con lo stesso identificativo (o lo stesso testo) sostituisce il precedente: niente pile di avvisi
+        const key = 'notice-' + (ev.id || Array.from(ev.text || '').reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7))
+        addBanner($('remote-banners'), ev.level === 'info' ? 'info' : 'warn', ev.text, { id: key })
         break
+      }
       case 'stats':
         if (S.mode === 'remote' && S.connState === 'connected') {
           setChip($('chip-conn'), 'ok', ev.rtt != null ? `CONNECTED · ${Math.round(ev.rtt)} ms` : 'CONNECTED',

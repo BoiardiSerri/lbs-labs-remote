@@ -185,7 +185,8 @@ final class AppCore {
             ev = ["type": kind]
         case "notice":
             let n = data as? [String: Any] ?? [:]
-            ev = ["type": "notice", "level": n["level"] as? String ?? "warning", "text": n["text"] as? String ?? ""]
+            ev = ["type": "notice", "level": n["level"] as? String ?? "warning", "text": n["text"] as? String ?? "",
+                  "id": n["id"] as? String ?? ""]
         default:
             return
         }

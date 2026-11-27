@@ -281,7 +281,8 @@ public final class AppCore implements NetSession.Listener {
                     break;
                 case "notice": {
                     JSONObject n = (JSONObject) data;
-                    ev.put("type", "notice").put("level", n.optString("level", "warning")).put("text", n.optString("text", ""));
+                    ev.put("type", "notice").put("level", n.optString("level", "warning"))
+                            .put("text", n.optString("text", "")).put("id", n.optString("id", ""));
                     break;
                 }
                 default:

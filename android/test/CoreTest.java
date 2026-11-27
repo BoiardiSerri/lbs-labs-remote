@@ -77,6 +77,17 @@ public class CoreTest {
                 ok &= core.session().currentSeq() > seq;
                 break;
             }
+            case "flap": {
+                // agente che chiude subito ogni connessione: il client deve smettere dopo poche prove
+                ok &= waitFor("closed", 40000);
+                String c = find("closed");
+                ok &= c != null && c.contains("keeps closing the connection");
+                int attempts = 0;
+                for (String e : events) if (e.contains("\"type\":\"reconnected\"")) attempts++;
+                System.out.println("riconnessioni riuscite: " + attempts);
+                ok &= attempts <= 3;
+                break;
+            }
             case "takeover": {
                 ok &= waitFor("connected", 6000);
                 System.out.println("READY");

@@ -147,6 +147,8 @@ final class NetSession {
     private static let reconnectWindow: TimeInterval = 15
     private static let reconnectDelay: TimeInterval = 2.5
     private static let pingInterval: TimeInterval = 1
+    private static let minSession: TimeInterval = 5       // una sessione più breve è "caduta subito"
+    private static let maxQuickDrops = 3                  // dopo tante cadute immediate di fila si smette
 
     let host: String
     let port: Int
@@ -159,6 +161,7 @@ final class NetSession {
     private var _fps: Double = 0
     private var _size: (Int, Int) = (0, 0)
     private var _stopped = false
+    private var lastNotice = ""
     private var sock: TCPSocket?
 
     private let frameCond = NSCondition()
@@ -282,20 +285,31 @@ final class NetSession {
             return
         }
         post("connected", hello)
+        var quickDrops = 0
         while !stopped {
+            let started = Date()
             let (kind, reason) = serve()
             if stopped { return }
             if kind == "bye" {
                 post("closed", reason)
                 return
             }
+            quickDrops = Date().timeIntervalSince(started) < NetSession.minSession ? quickDrops + 1 : 0
+            if quickDrops >= NetSession.maxQuickDrops {
+                // Il computer remoto chiude la connessione appena creata: riprovare di continuo è inutile.
+                let detail = lastNotice.isEmpty ? "" : " (\(lastNotice))"
+                post("closed", "The remote computer keeps closing the connection right after it is established\(detail). "
+                    + "Check LBS Labs Remote on that computer, then connect again.")
+                return
+            }
             post("reconnecting", reason)
             let deadline = Date().addingTimeInterval(NetSession.reconnectWindow)
             var again: String? = reason
             while !stopped && Date() < deadline {
+                Thread.sleep(forTimeInterval: NetSession.reconnectDelay)   // pausa prima di ogni tentativo
+                if stopped { return }
                 again = connectOnce()
                 if again == nil { break }
-                Thread.sleep(forTimeInterval: NetSession.reconnectDelay)
             }
             if stopped { return }
             if let e = again {
@@ -350,7 +364,9 @@ final class NetSession {
                         stateLock.unlock()
                     }
                 case Proto.notice:
-                    post("notice", parseJSON(payload) ?? [:])
+                    let notice = parseJSON(payload) ?? [:]
+                    stateLock.lock(); lastNotice = String(((notice["text"] as? String) ?? "").prefix(200)); stateLock.unlock()
+                    post("notice", notice)
                 case Proto.bye:
                     let reason = (parseJSON(payload)?["reason"] as? String) ?? ""
                     return ("bye", reason.isEmpty ? "Session closed by the remote computer." : reason)

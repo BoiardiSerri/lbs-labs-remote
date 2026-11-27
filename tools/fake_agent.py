@@ -40,7 +40,7 @@ def make_frame(size: tuple[int, int], n: int) -> bytes:
     return buf.getvalue()
 
 
-def serve(conn: socket.socket, addr, size: tuple[int, int], fps: int, deadline: float) -> None:
+def serve(conn: socket.socket, addr, size: tuple[int, int], fps: int, deadline: float, flap: bool = False) -> None:
     print(f"CLIENT connected {addr[0]}", flush=True)
     P.configure_socket(conn, 15.0)
     lock = threading.Lock()
@@ -65,6 +65,9 @@ def serve(conn: socket.socket, addr, size: tuple[int, int], fps: int, deadline: 
         send(P.MSG_HELLO, P.encode_json({
             "app": P.APP_ID, "v": P.PROTOCOL_VERSION, "version": "test", "name": "FAKE-AGENT",
             "platform": "win32", "screen": list(size), "warnings": []}))
+        if flap:        # prova della riconnessione: chiude subito dopo il saluto, come un agente che non riesce a lavorare
+            send(P.MSG_NOTICE, P.encode_json({"level": "warning", "text": "test: screen capture failed"}))
+            return
         threading.Thread(target=video, daemon=True).start()
         while True:
             kind, payload = P.recv_message(conn)
@@ -90,6 +93,7 @@ def main() -> None:
     ap.add_argument("--seconds", type=float, default=300, help="si ferma da solo dopo questo tempo")
     ap.add_argument("--fps", type=int, default=10)
     ap.add_argument("--size", default="1280x800")
+    ap.add_argument("--flap", action="store_true", help="chiude ogni connessione subito dopo il saluto")
     args = ap.parse_args()
     size = tuple(int(v) for v in args.size.lower().split("x"))
     deadline = time.time() + args.seconds
@@ -104,7 +108,7 @@ def main() -> None:
             conn, addr = srv.accept()
         except socket.timeout:
             continue
-        threading.Thread(target=serve, args=(conn, addr, size, args.fps, deadline), daemon=True).start()
+        threading.Thread(target=serve, args=(conn, addr, size, args.fps, deadline, args.flap), daemon=True).start()
 
 
 if __name__ == "__main__":

@@ -292,6 +292,20 @@ tccutil reset Accessibility com.lbslabs.remote
 
 ---
 
+### Se lo schermo del PC non arriva (avviso "screen capture")
+Windows non permette a nessun programma di catturare lo schermo quando il computer è **bloccato**
+(Win+L, salvaschermo con password) o mostra una richiesta di sicurezza (UAC), e a volte quando il
+monitor è spento o la sessione è stata scollegata (Desktop remoto). In questi casi l'agente non chiude
+più la connessione: avvisa chi controlla con il motivo (*"This computer is locked…"*), riprova ogni
+secondo e l'immagine torna da sola appena il PC viene sbloccato. Per un PC demo senza nessuno davanti
+disattiva il blocco automatico e la password del salvaschermo (*Impostazioni → Account → Opzioni di accesso*).
+I dettagli tecnici dell'errore sono in `%USERPROFILE%\.lbslabs-remote\agent.log`.
+
+Se un computer chiude la connessione subito dopo averla aperta, il viewer riprova con una pausa e dopo
+tre cadute immediate smette e lo spiega, invece di ricollegarsi all'infinito.
+
+---
+
 ## 6. Rete e firewall
 
 - Porte predefinite: **TCP 5970** (sessione) e **UDP 5901** (auto-discovery).

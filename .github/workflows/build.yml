@@ -9,6 +9,17 @@ permissions:
   contents: write   # per pubblicare i file nella pagina "Releases"
 
 jobs:
+  # Prove automatiche senza display (protocollo, cattura che fallisce, riconnessione in ciclo)
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install pillow
+      - run: python -m unittest discover -s tests -v
+
   # Un'unica app Universale (Intel + Apple Silicon nativo), costruita sul Mac Intel di GitHub
   macos:
     runs-on: macos-15-intel
@@ -173,6 +184,11 @@ jobs:
           grep -q "RESULT PASS" core_test.log
           grep -c "INPUT" fake_agent.log
           java -cp jtest:/usr/share/java/json-android.jar CoreTest fail 127.0.0.1 5999 | grep RESULT
+          # agente che chiude subito ogni connessione: il client smette dopo poche prove (niente ciclo infinito)
+          python tools/fake_agent.py --port 5971 --seconds 60 --flap > fake_flap.log 2>&1 &
+          sleep 1
+          java -cp jtest:/usr/share/java/json-android.jar CoreTest flap 127.0.0.1 5971 | tee flap_test.log | grep -E "riconnessioni|RESULT"
+          grep -q "RESULT PASS" flap_test.log
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
@@ -299,9 +315,9 @@ jobs:
 
   # Pubblica i file nella pagina Releases del repository (scaricabili dal browser)
   release:
-    needs: [macos, windows, android, ios]
+    needs: [tests, macos, windows, android, ios]
     # si pubblica solo da main e solo se tutti i pacchetti sono riusciti: mai una versione a metà
-    if: ${{ github.ref == 'refs/heads/main' && needs.macos.result == 'success' && needs.windows.result == 'success' && needs.android.result == 'success' && needs.ios.result == 'success' }}
+    if: ${{ github.ref == 'refs/heads/main' && needs.tests.result == 'success' && needs.macos.result == 'success' && needs.windows.result == 'success' && needs.android.result == 'success' && needs.ios.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

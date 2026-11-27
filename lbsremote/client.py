@@ -25,6 +25,8 @@ RECV_TIMEOUT = 6.0          # nessun dato (frame o pong) per 6 s => connessione 
 RECONNECT_WINDOW = 15.0     # per quanto tempo si tenta di riconnettersi
 RECONNECT_DELAY = 2.5
 PING_INTERVAL = 1.0
+MIN_SESSION_S = 5.0         # una sessione più breve è "caduta subito"
+MAX_QUICK_DROPS = 3         # dopo tante cadute immediate di fila si smette di riprovare
 
 
 class NetSession:
@@ -40,6 +42,7 @@ class NetSession:
         self.remote_config = remote_config
         self.on_event = on_event
         self.hello: dict = {}
+        self.last_notice = ""
         self.rtt_ms: float | None = None
         self.fps = 0.0
         self.frame_size: tuple[int, int] | None = None
@@ -132,22 +135,34 @@ class NetSession:
             self._post("failed", err)
             return
         self._post("connected", self.hello)
+        quick_drops = 0
         while not self._stop.is_set():
+            started = time.monotonic()
             kind, reason = self._serve()
             if self._stop.is_set():
                 return
             if kind == "bye":
                 self._post("closed", reason)
                 return
+            quick_drops = quick_drops + 1 if time.monotonic() - started < MIN_SESSION_S else 0
+            if quick_drops >= MAX_QUICK_DROPS:
+                # Il computer remoto chiude la connessione appena creata: riprovare di continuo
+                # carica inutilmente la rete e i due computer.
+                detail = f" ({self.last_notice})" if self.last_notice else ""
+                self._post("closed", "The remote computer keeps closing the connection right after it "
+                                     f"is established{detail}. Check LBS Labs Remote on that computer, then connect again.")
+                return
             log.info("connessione persa (%s): riconnessione", reason)
             self._post("reconnecting", reason)
             deadline = time.monotonic() + RECONNECT_WINDOW
             err = reason
             while not self._stop.is_set() and time.monotonic() < deadline:
+                self._stop.wait(RECONNECT_DELAY)          # pausa prima di ogni tentativo
+                if self._stop.is_set():
+                    return
                 err = self._connect()
                 if err is None:
                     break
-                self._stop.wait(RECONNECT_DELAY)
             if self._stop.is_set():
                 return
             if err is not None:
@@ -188,7 +203,9 @@ class NetSession:
                     rtt = (time.perf_counter() - float(decode_json(payload)["ts"])) * 1000.0
                     self.rtt_ms = rtt if self.rtt_ms is None else self.rtt_ms * 0.7 + rtt * 0.3
                 elif msg_type == MSG_NOTICE:
-                    self._post("notice", decode_json(payload))
+                    notice = decode_json(payload)
+                    self.last_notice = str(notice.get("text", ""))[:200]
+                    self._post("notice", notice)
                 elif msg_type == MSG_BYE:
                     return "bye", str(decode_json(payload).get("reason")
                                       or "Session closed by the remote computer.")

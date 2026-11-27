@@ -32,6 +32,8 @@ public final class NetSession {
     private static final long RECONNECT_WINDOW_MS = 15000;
     private static final long RECONNECT_DELAY_MS = 2500;
     private static final long PING_INTERVAL_MS = 1000;
+    private static final long MIN_SESSION_MS = 5000;      // una sessione più breve è "caduta subito"
+    private static final int MAX_QUICK_DROPS = 3;         // dopo tante cadute immediate di fila si smette
 
     public final String host;
     public final int port;
@@ -39,6 +41,7 @@ public final class NetSession {
     private final Listener listener;
 
     public volatile JSONObject hello = new JSONObject();
+    private volatile String lastNotice = "";
     public volatile double rttMs = -1;
     public volatile double fps = 0;
     public volatile int frameWidth = 0;
@@ -182,24 +185,35 @@ public final class NetSession {
             return;
         }
         post("connected", hello);
+        int quickDrops = 0;
         while (!stopped) {
+            long started = System.currentTimeMillis();
             String[] result = serve();
             if (stopped) return;
             if ("bye".equals(result[0])) {
                 post("closed", result[1]);
                 return;
             }
+            quickDrops = System.currentTimeMillis() - started < MIN_SESSION_MS ? quickDrops + 1 : 0;
+            if (quickDrops >= MAX_QUICK_DROPS) {
+                // Il computer remoto chiude la connessione appena creata: riprovare di continuo è inutile.
+                String detail = lastNotice.isEmpty() ? "" : " (" + lastNotice + ")";
+                post("closed", "The remote computer keeps closing the connection right after it is established"
+                        + detail + ". Check LBS Labs Remote on that computer, then connect again.");
+                return;
+            }
             post("reconnecting", result[1]);
             long deadline = System.currentTimeMillis() + RECONNECT_WINDOW_MS;
             err = result[1];
             while (!stopped && System.currentTimeMillis() < deadline) {
-                err = connectOnce();
-                if (err == null) break;
                 try {
-                    Thread.sleep(RECONNECT_DELAY_MS);
+                    Thread.sleep(RECONNECT_DELAY_MS);          // pausa prima di ogni tentativo
                 } catch (InterruptedException e) {
                     return;
                 }
+                if (stopped) return;
+                err = connectOnce();
+                if (err == null) break;
             }
             if (stopped) return;
             if (err != null) {
@@ -251,9 +265,13 @@ public final class NetSession {
                         rttMs = rttMs < 0 ? rtt : rttMs * 0.7 + rtt * 0.3;
                         break;
                     }
-                    case Protocol.MSG_NOTICE:
-                        post("notice", new JSONObject(m.text()));
+                    case Protocol.MSG_NOTICE: {
+                        JSONObject notice = new JSONObject(m.text());
+                        String text = notice.optString("text", "");
+                        lastNotice = text.length() > 200 ? text.substring(0, 200) : text;
+                        post("notice", notice);
                         break;
+                    }
                     case Protocol.MSG_BYE: {
                         String reason = new JSONObject(m.text()).optString("reason", "");
                         return new String[] {"bye", reason.isEmpty() ? "Session closed by the remote computer." : reason};

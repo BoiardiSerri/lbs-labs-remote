@@ -43,6 +43,49 @@ def enable_windows_dpi_awareness(per_monitor: bool = True) -> None:
         pass
 
 
+def windows_desktop_locked() -> bool | None:
+    """True se il computer è bloccato o mostra una richiesta di sicurezza (desktop protetto): in questi
+    casi nessun programma può catturare lo schermo. None se non verificabile (non Windows)."""
+    if not IS_WINDOWS:
+        return None
+    try:
+        user32 = ctypes.windll.user32
+        h = user32.OpenInputDesktop(0, False, 0x0100)     # DESKTOP_SWITCHDESKTOP
+        if not h:
+            return True
+        user32.CloseDesktop(h)
+        return False
+    except (AttributeError, OSError):
+        return None
+
+
+def windows_capture_diagnostics() -> str:
+    """Dati utili a capire perché la cattura fallisce (finiscono in agent.log)."""
+    if not IS_WINDOWS:
+        return ""
+    try:
+        k32, u32 = ctypes.windll.kernel32, ctypes.windll.user32
+        sid = ctypes.c_uint32(0)
+        k32.ProcessIdToSessionId(os.getpid(), ctypes.byref(sid))
+        return (f"sessione={sid.value} sessione_console={k32.WTSGetActiveConsoleSessionId()} "
+                f"remota={bool(u32.GetSystemMetrics(0x1000))} bloccato={windows_desktop_locked()} "
+                f"schermo={u32.GetSystemMetrics(0)}x{u32.GetSystemMetrics(1)}")
+    except Exception as exc:  # noqa: BLE001
+        return f"diagnostica non disponibile: {exc}"
+
+
+def capture_failure_text(exc: Exception) -> str:
+    """Spiega a chi controlla perché lo schermo non arriva, con parole semplici."""
+    if windows_desktop_locked():
+        return ("This computer is locked or showing a secure Windows prompt, so its screen cannot be "
+                "captured. Unlock it: the picture comes back by itself.")
+    if IS_MAC:
+        return ("This Mac's screen cannot be captured right now. Check the Screen Recording permission, "
+                "or the display may be off. Retrying…")
+    return ("The screen of this computer cannot be captured right now: it may be locked or its display "
+            f"turned off. Retrying… ({exc})")
+
+
 # --- macOS: permessi -----------------------------------------------------------
 
 _CG_PATH = "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics"

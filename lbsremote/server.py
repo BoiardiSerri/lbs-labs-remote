@@ -212,83 +212,121 @@ class ClientSession:
         last_sent_quality = None
         last_sent_scale = None
         unchanged_since = time.monotonic()
+        sct = None
+        mon = None
+        capture_failed_at = None      # inizio dell'episodio in cui lo schermo non è catturabile
         try:
-            with mss.mss() as sct:
-                idx = self.server.settings.monitor
-                mon = sct.monitors[idx if idx < len(sct.monitors) else 1]
-                while not self.closed:
-                    t0 = time.perf_counter()
-                    interval = 1.0 / max(1, self.fps)
-                    if self._settings_changed.is_set():
-                        self._settings_changed.clear()
-                        q_current, scale, prev_raw = self.quality, 1.0, None
+            while not self.closed:
+                t0 = time.perf_counter()
+                interval = 1.0 / max(1, self.fps)
+                if self._settings_changed.is_set():
+                    self._settings_changed.clear()
+                    q_current, scale, prev_raw = self.quality, 1.0, None
 
+                try:
+                    if sct is None:
+                        sct = mss.mss()
+                        idx = self.server.settings.monitor
+                        mon = sct.monitors[idx if idx < len(sct.monitors) else 1]
+                        if self.injector is not None:
+                            self.injector.monitor = dict(mon)   # la risoluzione può essere cambiata
                     shot = sct.grab(mon)
-                    raw = shot.bgra
-                    target_q = self.quality
-                    if raw == prev_raw:
-                        # Schermo invariato: non si invia nulla. Se l'ultimo frame era
-                        # stato degradato per congestione, dopo 0.5 s se ne manda uno
-                        # alla qualità piena per "rifinire" l'immagine statica.
-                        needs_refine = (last_sent_quality is not None and
-                                        (last_sent_quality < target_q or last_sent_scale < 1.0))
-                        if not (needs_refine and time.monotonic() - unchanged_since > 0.5):
-                            self._closed.wait(max(0.0, interval - (time.perf_counter() - t0)))
-                            continue
-                        q_send, scale_send = target_q, 1.0
-                    else:
-                        prev_raw = raw
-                        unchanged_since = time.monotonic()
-                        q_send = q_current if self.adaptive else target_q
-                        scale_send = scale if self.adaptive else 1.0
+                except Exception as exc:
+                    # Schermo non catturabile ora (computer bloccato, schermo spento, cambio di
+                    # risoluzione, sessione scollegata): la sessione resta aperta e si riprova con
+                    # calma. Chiuderla farebbe ricollegare subito il viewer, in un ciclo senza fine.
+                    if sct is not None:
+                        try:
+                            sct.close()
+                        except Exception:
+                            pass
+                        sct = None
+                    prev_raw = None
+                    if capture_failed_at is None:
+                        capture_failed_at = time.monotonic()
+                        log.warning("cattura dello schermo non riuscita: %s [%s]", exc, pu.windows_capture_diagnostics())
+                        self._notice("warning", pu.capture_failure_text(exc), "capture")
+                    self._closed.wait(1.0)
+                    continue
+                if capture_failed_at is not None:
+                    log.info("cattura dello schermo ripristinata dopo %.0f s", time.monotonic() - capture_failed_at)
+                    capture_failed_at = None
+                    self._notice("info", "Screen capture is back.", "capture")
+                raw = shot.bgra
+                target_q = self.quality
+                if raw == prev_raw:
+                    # Schermo invariato: non si invia nulla. Se l'ultimo frame era
+                    # stato degradato per congestione, dopo 0.5 s se ne manda uno
+                    # alla qualità piena per "rifinire" l'immagine statica.
+                    needs_refine = (last_sent_quality is not None and
+                                    (last_sent_quality < target_q or last_sent_scale < 1.0))
+                    if not (needs_refine and time.monotonic() - unchanged_since > 0.5):
+                        self._closed.wait(max(0.0, interval - (time.perf_counter() - t0)))
+                        continue
+                    q_send, scale_send = target_q, 1.0
+                else:
+                    prev_raw = raw
+                    unchanged_since = time.monotonic()
+                    q_send = q_current if self.adaptive else target_q
+                    scale_send = scale if self.adaptive else 1.0
 
-                    img = Image.frombytes("RGB", shot.size, raw, "raw", "BGRX")
-                    w, h = img.size
-                    max_w = int((self.max_width or w) * scale_send)
-                    if w > max_w > 0:
-                        img = img.resize((max_w, max(1, round(h * max_w / w))), Image.BILINEAR)
-                    buf = io.BytesIO()
-                    img.save(buf, "JPEG", quality=int(q_send))
-                    jpeg = buf.getvalue()
+                img = Image.frombytes("RGB", shot.size, raw, "raw", "BGRX")
+                w, h = img.size
+                max_w = int((self.max_width or w) * scale_send)
+                if w > max_w > 0:
+                    img = img.resize((max_w, max(1, round(h * max_w / w))), Image.BILINEAR)
+                buf = io.BytesIO()
+                img.save(buf, "JPEG", quality=int(q_send))
+                jpeg = buf.getvalue()
 
-                    t_send = time.perf_counter()
-                    self.send(MSG_FRAME, jpeg)
-                    send_dt = time.perf_counter() - t_send
-                    last_sent_quality, last_sent_scale = q_send, scale_send
+                t_send = time.perf_counter()
+                self.send(MSG_FRAME, jpeg)
+                send_dt = time.perf_counter() - t_send
+                last_sent_quality, last_sent_scale = q_send, scale_send
 
-                    if self.adaptive:
-                        # Se l'invio blocca (buffer TCP pieno) il canale è congestionato:
-                        # si scende di qualità e poi di risoluzione; si risale piano.
-                        if send_dt > interval * 0.6:
-                            good_streak = 0
-                            if q_current > Q_MIN:
-                                q_current = max(Q_MIN, q_current - 8)
-                            else:
-                                scale = max(0.5, scale - 0.1)
+                if self.adaptive:
+                    # Se l'invio blocca (buffer TCP pieno) il canale è congestionato:
+                    # si scende di qualità e poi di risoluzione; si risale piano.
+                    if send_dt > interval * 0.6:
+                        good_streak = 0
+                        if q_current > Q_MIN:
+                            q_current = max(Q_MIN, q_current - 8)
                         else:
-                            good_streak += 1
-                            if good_streak >= max(6, self.fps * 2):
-                                good_streak = 0
-                                if scale < 1.0:
-                                    scale = min(1.0, scale + 0.1)
-                                elif q_current < target_q:
-                                    q_current = min(target_q, q_current + 5)
-                        q_current = min(q_current, target_q)
+                            scale = max(0.5, scale - 0.1)
+                    else:
+                        good_streak += 1
+                        if good_streak >= max(6, self.fps * 2):
+                            good_streak = 0
+                            if scale < 1.0:
+                                scale = min(1.0, scale + 0.1)
+                            elif q_current < target_q:
+                                q_current = min(target_q, q_current + 5)
+                    q_current = min(q_current, target_q)
 
-                    self._closed.wait(max(0.0, interval - (time.perf_counter() - t0)))
+                self._closed.wait(max(0.0, interval - (time.perf_counter() - t0)))
         except OSError as exc:
             if not self.closed:
                 log.info("invio frame a %s interrotto: %s", self.ip, exc)
         except Exception as exc:
-            log.exception("errore nella cattura dello schermo")
-            try:
-                self.send_json(MSG_NOTICE, {"level": "error",
-                                            "text": f"Screen capture failed on the remote computer: {exc}"},
-                               timeout=1.0)
-            except OSError:
-                pass
+            log.exception("errore nell'invio dello schermo")
+            self._notice("error", f"Screen sharing failed on the remote computer: {exc}")
         finally:
+            if sct is not None:
+                try:
+                    sct.close()
+                except Exception:
+                    pass
             self.close()
+
+    def _notice(self, level: str, text: str, key: str | None = None) -> None:
+        """Avviso per chi controlla; `key` identifica un avviso che ne sostituisce uno uguale precedente."""
+        payload = {"level": level, "text": text}
+        if key:
+            payload["id"] = key
+        try:
+            self.send_json(MSG_NOTICE, payload, timeout=1.0)
+        except OSError:
+            pass
 
 
 def probe_agent(port: int, timeout: float = 2.0) -> str:
