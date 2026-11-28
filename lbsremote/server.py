@@ -17,7 +17,7 @@ from dataclasses import asdict, dataclass
 from . import __version__
 from . import platform_utils as pu
 from .discovery import Announcer, machine_name
-from .protocol import (APP_ID, DEFAULT_PORT, DISCOVERY_PORT, MSG_BYE, MSG_CONFIG, MSG_FRAME,
+from .protocol import (APP_ID, MSG_MONITORS, DEFAULT_PORT, DISCOVERY_PORT, MSG_BYE, MSG_CONFIG, MSG_FRAME,
                        MSG_HELLO, MSG_INPUT, MSG_NOTICE, MSG_PING, MSG_PONG, PROTOCOL_VERSION,
                        ConnectionClosed, ProtocolError, configure_socket, decode_json,
                        encode_json, pack_message, recv_message)
@@ -26,6 +26,7 @@ log = logging.getLogger(__name__)
 
 SOCKET_TIMEOUT = 15.0      # nessun dato dal client per 15 s => client considerato perso
 Q_MIN = 20                 # qualità JPEG minima in modalità adattiva
+MAX_MONITORS = 3           # al massimo tre monitor selezionabili
 
 
 @dataclass
@@ -37,7 +38,7 @@ class ServerSettings:
     quality: int = 50          # JPEG 1-95: medio-bassa per privilegiare la fluidità
     adaptive: bool = True      # adatta qualità/risoluzione alla congestione
     max_width: int = 1920      # 0 = risoluzione originale (es. Retina 2880 px)
-    monitor: int = 1           # 1 = schermo principale (indice mss)
+    monitor: int = 1           # monitor mostrato all'inizio: 1 = principale (max 3)
     notify_on_connect: bool = True
 
     @classmethod
@@ -54,6 +55,21 @@ def _clamp(value, lo, hi, default):
         return max(lo, min(hi, int(value)))
     except (TypeError, ValueError):
         return default
+
+
+def enumerate_monitors(sct) -> list[dict]:
+    """Monitor reali del computer (al massimo MAX_MONITORS), il principale per primo e numerati da 1.
+
+    Ogni voce: {id, left, top, width, height}. Le coordinate sono quelle del sistema operativo,
+    le stesse che usa l'iniezione del mouse (pixel fisici su Windows, punti su macOS).
+    """
+    real = sorted(sct.monitors[1:], key=lambda m: 0 if m.get("is_primary") else 1)   # ordinamento stabile
+    return [{"id": i + 1, "left": m["left"], "top": m["top"], "width": m["width"], "height": m["height"]}
+            for i, m in enumerate(real[:MAX_MONITORS])]
+
+
+def _public_monitors(monitors: list[dict]) -> list[dict]:
+    return [{"id": m["id"], "width": m["width"], "height": m["height"]} for m in monitors]
 
 
 class ClientSession:
@@ -75,6 +91,9 @@ class ClientSession:
         self._settings_changed = threading.Event()
         self.injector = None
         self.monitor_geom = None
+        self.monitors: list[dict] = []                     # elenco annunciato al client
+        self.monitor_index = max(1, int(s.monitor or 1))   # monitor mostrato (1..3)
+        self._monitor_changed = threading.Event()
 
     # --- invio ---
     def send(self, msg_type: int, payload: bytes, timeout: float | None = None) -> bool:
@@ -127,10 +146,11 @@ class ClientSession:
         try:
             import mss
             with mss.mss() as sct:
-                idx = self.server.settings.monitor
-                if idx >= len(sct.monitors):
-                    idx = 1
-                self.monitor_geom = dict(sct.monitors[idx])
+                self.monitors = enumerate_monitors(sct)
+            if not self.monitors:
+                raise RuntimeError("no monitor found")
+            self.monitor_index = min(self.monitor_index, len(self.monitors))
+            self.monitor_geom = dict(self.monitors[self.monitor_index - 1])
 
             self.server.check_permissions(prompt=False)    # i permessi possono essere cambiati dopo l'avvio
             warnings = list(self.server.permission_problems)
@@ -145,6 +165,7 @@ class ClientSession:
                 "app": APP_ID, "v": PROTOCOL_VERSION, "version": __version__,
                 "name": machine_name(), "platform": sys.platform,
                 "screen": [self.monitor_geom["width"], self.monitor_geom["height"]],
+                "monitors": _public_monitors(self.monitors), "monitor": self.monitor_index,
                 "warnings": warnings,
             })
             for text in warnings:
@@ -196,6 +217,12 @@ class ClientSession:
             self.adaptive = bool(cfg["adaptive"])
         if "max_width" in cfg:
             self.max_width = _clamp(cfg["max_width"], 0, 10000, self.max_width)
+        if "monitor" in cfg:
+            wanted = _clamp(cfg["monitor"], 1, MAX_MONITORS, self.monitor_index)
+            if wanted != self.monitor_index and wanted <= len(self.monitors):
+                self.monitor_index = wanted
+                self._monitor_changed.set()
+                log.info("monitor scelto dal client: %d", wanted)
         self._settings_changed.set()
         log.info("impostazioni dal client: fps=%s qualità=%s adattiva=%s max_width=%s",
                  self.fps, self.quality, self.adaptive, self.max_width)
@@ -214,6 +241,7 @@ class ClientSession:
         unchanged_since = time.monotonic()
         sct = None
         mon = None
+        announce = False
         capture_failed_at = None      # inizio dell'episodio in cui lo schermo non è catturabile
         try:
             while not self.closed:
@@ -223,13 +251,22 @@ class ClientSession:
                     self._settings_changed.clear()
                     q_current, scale, prev_raw = self.quality, 1.0, None
 
+                if self._monitor_changed.is_set():
+                    self._monitor_changed.clear()
+                    announce = True                              # conferma al client la scelta
+                    if sct is not None:
+                        try:
+                            sct.close()
+                        except Exception:
+                            pass
+                        sct = None
+                    prev_raw = None
+
                 try:
                     if sct is None:
                         sct = mss.mss()
-                        idx = self.server.settings.monitor
-                        mon = sct.monitors[idx if idx < len(sct.monitors) else 1]
-                        if self.injector is not None:
-                            self.injector.monitor = dict(mon)   # la risoluzione può essere cambiata
+                        mon = self._select_monitor(sct, announce)
+                        announce = False
                     shot = sct.grab(mon)
                 except Exception as exc:
                     # Schermo non catturabile ora (computer bloccato, schermo spento, cambio di
@@ -317,6 +354,26 @@ class ClientSession:
                 except Exception:
                     pass
             self.close()
+
+    def _select_monitor(self, sct, announce: bool = False) -> dict:
+        """Rilegge i monitor (possono essere cambiati), sceglie quello richiesto e aggiorna il mouse.
+        Avvisa il client se la scelta o l'elenco è cambiato (o se `announce`)."""
+        monitors = enumerate_monitors(sct)
+        if not monitors:
+            raise RuntimeError("no monitor found")
+        idx = min(max(1, self.monitor_index), len(monitors))
+        old = [(m["id"], m["width"], m["height"]) for m in self.monitors]
+        changed = idx != self.monitor_index or old != [(m["id"], m["width"], m["height"]) for m in monitors]
+        self.monitor_index, self.monitors = idx, monitors
+        mon = monitors[idx - 1]
+        if self.injector is not None:
+            self.injector.monitor = dict(mon)        # posizione e dimensioni del nuovo monitor
+        if announce or changed:
+            try:
+                self.send_json(MSG_MONITORS, {"monitor": idx, "monitors": _public_monitors(monitors)}, timeout=1.0)
+            except OSError:
+                pass
+        return mon
 
     def _notice(self, level: str, text: str, key: str | None = None) -> None:
         """Avviso per chi controlla; `key` identifica un avviso che ne sostituisce uno uguale precedente."""

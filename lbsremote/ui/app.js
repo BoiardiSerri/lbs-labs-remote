@@ -27,6 +27,8 @@ const S = {
   frameSeq: 0,
   frameLoopId: 0,
   frameUrl: null,
+  monitors: [],             // monitor del computer remoto (max 3): [{id, width, height}]
+  monitor: 1,               // monitor mostrato
   frameShown: false,        // il primo frame mostrato viene segnalato all'app nativa (diagnostica)
   serversSig: '',
 }
@@ -128,6 +130,36 @@ function addBanner(container, kind, text, { closable = true, id = null } = {}) {
 function clearBanners(container) { container.innerHTML = '' }
 
 // ============================================================================
+// monitor del computer remoto: pulsanti "1", "1 2" o "1 2 3" accanto a Full screen
+// ============================================================================
+function renderMonitors() {
+  const seg = $('monitor-seg')
+  const canSelect = S.api && typeof S.api.select_monitor === 'function'
+  if (S.mode !== 'remote' || !canSelect) { seg.classList.add('hidden'); return }
+  const list = S.monitors.length ? S.monitors : [{ id: 1 }]      // agenti senza elenco: un solo monitor
+  seg.innerHTML = ''
+  for (const m of list) {
+    const b = document.createElement('button')
+    b.className = 'ds-seg__item num' + (m.id === S.monitor ? ' is-checked' : '')
+    b.setAttribute('role', 'radio')
+    b.setAttribute('aria-checked', m.id === S.monitor ? 'true' : 'false')
+    b.textContent = String(m.id)
+    b.title = `Monitor ${m.id}` + (m.width ? ` · ${m.width} × ${m.height}` : '')
+    b.addEventListener('click', () => selectMonitor(m.id))
+    seg.appendChild(b)
+  }
+  seg.classList.remove('hidden')
+}
+
+async function selectMonitor(n) {
+  if (n === S.monitor || S.connState !== 'connected') return
+  S.monitor = n
+  renderMonitors()
+  releaseAll(true)                                   // niente tasti o pulsanti rimasti premuti sul vecchio schermo
+  try { await S.api.select_monitor(n) } catch (e) { /* sessione chiusa */ }
+}
+
+// ============================================================================
 // schermate
 // ============================================================================
 function showConnectScreen() {
@@ -142,6 +174,8 @@ function showConnectScreen() {
   $('screen-connect').classList.remove('hidden')
   $('screen-remote').classList.add('hidden')
   for (const id of ['docname', 'chip-conn', 'chip-control', 'btn-fullscreen', 'btn-disconnect', 'btn-keyboard']) $(id).classList.add('hidden')
+  $('monitor-seg').classList.add('hidden')
+  S.monitors = []; S.monitor = 1
   if (typeof kbdSetOpen === 'function') kbdSetOpen(false)
   if (!S.mobile) $('chip-agent').classList.remove('hidden')
   $('btn-connect').disabled = false
@@ -169,6 +203,9 @@ function showRemoteScreen(hello) {
     kbdSetPlatform((hello && hello.platform) || '')
   }
   $('docname-text').textContent = S.remoteName === S.host ? S.host : `${S.remoteName}  ·  ${S.host}`
+  S.monitors = (hello && hello.monitors) || []
+  S.monitor = (hello && hello.monitor) || 1
+  renderMonitors()
   $('remote-status').classList.add('hidden')
   setChip($('chip-conn'), 'ok', 'CONNECTED')
   S.swallowUntil = performance.now() + CLICK_SWALLOW_MS
@@ -527,6 +564,11 @@ window.LBS = {
         setChip($('chip-conn'), 'ok', 'CONNECTED')
         $('remote-status').classList.add('hidden')
         updateControlState()
+        break
+      case 'monitors':
+        S.monitors = ev.monitors || S.monitors
+        S.monitor = ev.monitor || S.monitor
+        renderMonitors()
         break
       case 'notice': {
         // un avviso con lo stesso identificativo (o lo stesso testo) sostituisce il precedente: niente pile di avvisi

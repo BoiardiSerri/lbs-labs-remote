@@ -40,6 +40,14 @@ Doppio clic sull'app mentre è già attiva = si apre la finestra di connessione.
 **In pratica**: installata l'app su tutti i PC, sul computer di controllo basta aprire LBS Labs
 Remote, scrivere l'indirizzo IP (o scegliere il PC dall'elenco) e premere Invio.
 
+### Più monitor
+Se il computer da controllare ha più monitor (al massimo **3**), nella barra in alto, accanto a
+**FULL SCREEN**, compaiono i pulsanti **1**, **1 2** oppure **1 2 3**: il numero attivo (in ambra) è il
+monitor mostrato. Il **1** è il monitor principale del computer remoto. Mouse e tastiera agiscono sul
+monitor mostrato; se ti ricolleghi dopo una caduta della rete, torni da solo al monitor scelto. Con un
+solo monitor compare solo il **1**. A schermo intero la barra è nascosta: esci con ESC per cambiare
+monitor. Funziona tra Mac e Windows; le app per Android e iPad non lo hanno ancora.
+
 ### Aggiornare l'app
 L'app resta attiva in background (di proposito): per questo il sistema la considera "in uso" e non
 permette di sostituirla. Prima di aggiornare, esci da tutto:

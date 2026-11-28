@@ -13,7 +13,7 @@ import socket
 import threading
 import time
 
-from .protocol import (APP_ID, MSG_BYE, MSG_CONFIG, MSG_FRAME, MSG_HELLO, MSG_INPUT, MSG_NOTICE,
+from .protocol import (APP_ID, MSG_BYE, MSG_CONFIG, MSG_MONITORS, MSG_FRAME, MSG_HELLO, MSG_INPUT, MSG_NOTICE,
                        MSG_PING, MSG_PONG, ConnectionClosed, ProtocolError, configure_socket,
                        decode_json, describe_foreign_service, encode_json, recv_message,
                        send_json, send_message)
@@ -42,6 +42,7 @@ class NetSession:
         self.remote_config = remote_config
         self.on_event = on_event
         self.hello: dict = {}
+        self.monitor = 0              # monitor scelto da chi controlla (0 = quello predefinito dell'agente)
         self.last_notice = ""
         self.rtt_ms: float | None = None
         self.fps = 0.0
@@ -74,6 +75,11 @@ class NetSession:
     @property
     def stopped(self) -> bool:
         return self._stop.is_set()
+
+    def select_monitor(self, number: int) -> None:
+        """Chiede all'agente di mostrare il monitor `number` (1..3). Dopo una riconnessione si richiede da soli."""
+        self.monitor = int(number)
+        self._send_q.put((MSG_CONFIG, encode_json({"monitor": self.monitor})))
 
     def send_input(self, event: dict) -> None:
         self._send_q.put((MSG_INPUT, encode_json(event)))
@@ -110,8 +116,11 @@ class NetSession:
             hello = decode_json(payload) if msg_type == MSG_HELLO else {}
             if hello.get("app") != APP_ID:
                 raise ProtocolError(describe_foreign_service(b"", self.port))
-            if self.remote_config:
-                send_json(sock, MSG_CONFIG, self.remote_config)
+            config = dict(self.remote_config)
+            if self.monitor:
+                config["monitor"] = self.monitor
+            if config:
+                send_json(sock, MSG_CONFIG, config)
         except socket.timeout:
             err = ("no response. Is the computer on and connected to the network? Is LBS Labs "
                    "Remote installed on it? Is a firewall blocking the connection?")
@@ -202,6 +211,8 @@ class NetSession:
                 elif msg_type == MSG_PONG:
                     rtt = (time.perf_counter() - float(decode_json(payload)["ts"])) * 1000.0
                     self.rtt_ms = rtt if self.rtt_ms is None else self.rtt_ms * 0.7 + rtt * 0.3
+                elif msg_type == MSG_MONITORS:
+                    self._post("monitors", decode_json(payload))
                 elif msg_type == MSG_NOTICE:
                     notice = decode_json(payload)
                     self.last_notice = str(notice.get("text", ""))[:200]

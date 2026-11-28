@@ -10,7 +10,11 @@ Windows con `.github/workflows/build.yml`, pubblicati nella pagina Releases.
   portata da `client.py`. I tablet sono solo viewer. `packaging/mobile/prepare_assets.py` copia interfaccia e
   stile LBS nelle app a ogni build (niente copie nel repository). Se cambi il protocollo (`protocol.py`) o
   l'`api` dell'interfaccia, aggiorna **tutte e tre** le implementazioni (Python, Java, Swift).
-- `tools/fake_agent.py` è un agente di prova per le prove automatiche (emulatore Android, simulatore iPad).
+- **Build per tablet in pausa**: `packaging/mobile/BUILD_MOBILE` contiene `off` (le app Android/iPad non vengono
+  compilate né pubblicate). Per riattivarle scrivere `on`. Prima di riattivarle: il protocollo ha ora i monitor
+  multipli (`MSG_MONITORS`, chiave `monitor` in CONFIG, `monitors`/`monitor` in HELLO, api `select_monitor`);
+  Java e Swift non li gestiscono ancora (ignorano il messaggio; la UI nasconde i pulsanti senza `select_monitor`).
+- `tools/fake_agent.py` è un agente di prova (`--monitors 1|2|3` simula più monitor) per le prove automatiche (emulatore Android, simulatore iPad).
 - Il ramo `mobile` compila e prova tutto senza pubblicare; si pubblica solo da `main`.
 - Interfaccia in **inglese** (testi visibili all'utente); commenti e documentazione in italiano.
 - L'interfaccia usa direttamente `LBS-Stile-Grafico/tokens`, `css`, `font`, `logo`, `icone`

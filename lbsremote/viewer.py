@@ -187,6 +187,11 @@ class Api:
             pu.mac_trigger_local_network()
             pu.mac_open_privacy_pane("LocalNetwork")
 
+    def select_monitor(self, number):
+        session = self._viewer.session
+        if session is not None:
+            session.select_monitor(int(number))
+
     def restart_app(self):
         return pu.mac_relaunch()
 
@@ -337,6 +342,8 @@ class ViewerApp:
             self.capture_active = False
             self._restore_window()
             self.push({"type": "closed", "message": str(data or "")})
+        elif kind == "monitors":
+            self.push({"type": "monitors", **(data if isinstance(data, dict) else {})})
         elif kind in ("reconnecting", "reconnected"):
             self.push({"type": kind})
         elif kind == "notice":

@@ -14,17 +14,22 @@ messaggi di controllo (hello, ping/pong, avvisi, comandi di input), che
 hanno un payload JSON UTF-8.
 
 Messaggi server -> client
-    HELLO   JSON  {"app", "v", "name", "platform", "screen": [w, h], "warnings": [...]}
+    HELLO   JSON  {"app", "v", "name", "platform", "screen": [w, h], "warnings": [...],
+                   "monitors": [{"id": 1, "width": w, "height": h}, ...], "monitor": 1}
+                  (screen = dimensioni del monitor in uso; monitors = al massimo 3, il principale è il n. 1;
+                   le chiavi "monitors" e "monitor" mancano negli agenti più vecchi)
     FRAME   JPEG
     PONG    JSON  eco del PING ricevuto
     NOTICE  JSON  {"level": "info"|"warning"|"error", "text": "..."}
     BYE     JSON  {"reason": "..."}  (il server chiude: il client NON deve riconnettersi)
+    MONITORS JSON {"monitor": 2, "monitors": [{"id", "width", "height"}, ...]}  (dopo una scelta del client
+                  o se cambia la configurazione dei monitor; i client che non lo conoscono lo ignorano)
 
 Messaggi client -> server
     INPUT   JSON  un evento di input (vedi sotto)
     PING    JSON  {"ts": <float>}  (il server risponde con PONG identico)
-    CONFIG  JSON  {"quality": int, "adaptive": bool, "fps": int, "max_width": int}
-                  (tutte le chiavi sono opzionali)
+    CONFIG  JSON  {"quality": int, "adaptive": bool, "fps": int, "max_width": int, "monitor": int}
+                  (tutte le chiavi sono opzionali; "monitor" sceglie lo schermo da mostrare: 1..3)
 
 Eventi INPUT (coordinate x/y sempre in frazione 0.0-1.0 dello schermo remoto)
     {"t": "move", "x": 0.5, "y": 0.5}
@@ -56,6 +61,7 @@ MSG_FRAME = 2
 MSG_PONG = 3
 MSG_NOTICE = 4
 MSG_BYE = 5
+MSG_MONITORS = 6          # elenco dei monitor del computer remoto e quello in uso (vedi sotto)
 # client -> server
 MSG_INPUT = 10
 MSG_PING = 11

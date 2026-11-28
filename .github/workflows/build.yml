@@ -9,6 +9,19 @@ permissions:
   contents: write   # per pubblicare i file nella pagina "Releases"
 
 jobs:
+  # Decide se compilare anche le app per Android e iPad: interruttore nel file packaging/mobile/BUILD_MOBILE
+  # ("on" / "off"). Con "off" i lavori per tablet vengono saltati e la pubblicazione include solo Mac e Windows.
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      mobile: ${{ steps.p.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        run: |
+          if grep -qix "on" packaging/mobile/BUILD_MOBILE; then echo "mobile=true" >> "$GITHUB_OUTPUT"; else echo "mobile=false" >> "$GITHUB_OUTPUT"; fi
+          cat packaging/mobile/BUILD_MOBILE
+
   # Prove automatiche senza display (protocollo, cattura che fallisce, riconnessione in ciclo)
   tests:
     runs-on: ubuntu-latest
@@ -159,6 +172,8 @@ jobs:
 
   # ------------------------------------------------------------------ Android (APK firmato)
   android:
+    needs: plan
+    if: ${{ needs.plan.outputs.mobile == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -209,7 +224,8 @@ jobs:
   # Prova completa sull'emulatore Android: l'app si collega all'agente di prova, riceve i frame
   # e un tocco sullo schermo arriva all'agente come clic. Non blocca la pubblicazione.
   android-e2e:
-    needs: android
+    needs: [plan, android]
+    if: ${{ needs.plan.outputs.mobile == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     continue-on-error: true
@@ -244,6 +260,8 @@ jobs:
 
   # ------------------------------------------------------------------ iPad / iPhone (.ipa non firmato)
   ios:
+    needs: plan
+    if: ${{ needs.plan.outputs.mobile == 'true' }}
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -284,6 +302,8 @@ jobs:
   # Prova sul simulatore iPad: l'app si collega all'agente di prova, riceve i frame e invia un clic.
   # Non blocca la pubblicazione.
   ios-simulator:
+    needs: plan
+    if: ${{ needs.plan.outputs.mobile == 'true' }}
     runs-on: macos-15
     timeout-minutes: 40
     continue-on-error: true
@@ -315,9 +335,10 @@ jobs:
 
   # Pubblica i file nella pagina Releases del repository (scaricabili dal browser)
   release:
-    needs: [tests, macos, windows, android, ios]
+    needs: [plan, tests, macos, windows, android, ios]
     # si pubblica solo da main e solo se tutti i pacchetti sono riusciti: mai una versione a metà
-    if: ${{ github.ref == 'refs/heads/main' && needs.tests.result == 'success' && needs.macos.result == 'success' && needs.windows.result == 'success' && needs.android.result == 'success' && needs.ios.result == 'success' }}
+    # (!cancelled(): i lavori per tablet possono essere saltati; se invece sono falliti non si pubblica)
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.tests.result == 'success' && needs.macos.result == 'success' && needs.windows.result == 'success' && (needs.android.result == 'success' || needs.android.result == 'skipped') && (needs.ios.result == 'success' || needs.ios.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -332,13 +353,21 @@ jobs:
           VERSION=$(python3 -c "import lbsremote; print(lbsremote.__version__)")
           TAG="v$VERSION"
           ls -la artifacts
-          NOTES="Download the file for your device:
-          - Mac (all models: Apple silicon M1/M2/M3/M4 and Intel, Universal app): LBS-Labs-Remote-macOS.dmg
-          - Windows: LBS-Labs-Remote-Windows-Setup.exe
-          - Android phone or tablet: LBS-Labs-Remote-Android.apk (allow installing from this source when asked)
-          - iPad / iPhone: LBS-Labs-Remote-iPad.ipa (not signed: install it with Sideloadly or AltStore, see README)
+          NOTES="Download the file for your computer or device:"
+          [ -f artifacts/LBS-Labs-Remote-macOS.dmg ] && NOTES="$NOTES
+          - Mac (all models: Apple silicon M1/M2/M3/M4 and Intel, Universal app): LBS-Labs-Remote-macOS.dmg"
+          [ -f artifacts/LBS-Labs-Remote-Windows-Setup.exe ] && NOTES="$NOTES
+          - Windows: LBS-Labs-Remote-Windows-Setup.exe"
+          [ -f artifacts/LBS-Labs-Remote-Android.apk ] && NOTES="$NOTES
+          - Android phone or tablet: LBS-Labs-Remote-Android.apk (allow installing from this source when asked)"
+          [ -f artifacts/LBS-Labs-Remote-iPad.ipa ] && NOTES="$NOTES
+          - iPad / iPhone: LBS-Labs-Remote-iPad.ipa (not signed: install it with Sideloadly or AltStore, see README)"
+          NOTES="$NOTES
 
-          Mac and Windows can control and be controlled. Android and iPad are viewers: they control Mac and Windows computers.
+          Mac and Windows can control and be controlled. Android and iPad are viewers: they control Mac and Windows computers."
+          [ -f artifacts/LBS-Labs-Remote-Android.apk ] || NOTES="$NOTES
+          The Android and iPad apps are not part of this version; the latest ones are in the previous release."
+          NOTES="$NOTES
 
           Built on $(date -u '+%Y-%m-%d %H:%M') UTC (commit ${GITHUB_SHA::7})."
           if gh release view "$TAG" >/dev/null 2>&1; then

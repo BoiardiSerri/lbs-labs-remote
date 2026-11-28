@@ -24,7 +24,7 @@ from PIL import Image, ImageDraw  # noqa: E402
 from lbsremote import protocol as P  # noqa: E402
 
 
-def make_frame(size: tuple[int, int], n: int) -> bytes:
+def make_frame(size: tuple[int, int], n: int, monitor: int = 1) -> bytes:
     w, h = size
     img = Image.new("RGB", (w, h), (38, 40, 44))
     d = ImageDraw.Draw(img)
@@ -34,13 +34,15 @@ def make_frame(size: tuple[int, int], n: int) -> bytes:
         d.line([(0, i), (w, i)], fill=(55, 58, 64))
     x = (n * 12) % (w - 200)
     d.rectangle((x, h // 2 - 40, x + 200, h // 2 + 40), fill=(245, 168, 0))
-    d.text((20, 20), f"FAKE AGENT  frame {n}", fill=(241, 241, 241))
+    d.text((20, 20), f"FAKE AGENT  monitor {monitor}  frame {n}", fill=(241, 241, 241))
+    d.rectangle((0, 0, w - 1, 6), fill=[(245, 168, 0), (92, 199, 110), (159, 195, 230)][(monitor - 1) % 3])
     buf = io.BytesIO()
     img.save(buf, "JPEG", quality=60)
     return buf.getvalue()
 
 
-def serve(conn: socket.socket, addr, size: tuple[int, int], fps: int, deadline: float, flap: bool = False) -> None:
+def serve(conn: socket.socket, addr, size: tuple[int, int], fps: int, deadline: float, flap: bool = False,
+          monitors: int = 1) -> None:
     print(f"CLIENT connected {addr[0]}", flush=True)
     P.configure_socket(conn, 15.0)
     lock = threading.Lock()
@@ -51,11 +53,19 @@ def serve(conn: socket.socket, addr, size: tuple[int, int], fps: int, deadline: 
         with lock:
             conn.sendall(P.pack_message(kind, payload))
 
+    state = {"monitor": 1}
+
+    def monitor_list():
+        # monitor di prova: il 2 è più stretto e il 3 più piccolo, per provare il cambio di dimensioni
+        sizes = [size, (size[0] * 3 // 4, size[1]), (size[0] // 2, size[1] // 2)]
+        return [{"id": i + 1, "width": sizes[i][0], "height": sizes[i][1]} for i in range(monitors)]
+
     def video() -> None:
         n = 0
         try:
             while alive.is_set() and time.time() < deadline:
-                send(P.MSG_FRAME, make_frame(size, n))
+                m = monitor_list()[state["monitor"] - 1]
+                send(P.MSG_FRAME, make_frame((m["width"], m["height"]), n, state["monitor"]))
                 n += 1
                 time.sleep(1.0 / fps)
         except OSError:
@@ -64,7 +74,8 @@ def serve(conn: socket.socket, addr, size: tuple[int, int], fps: int, deadline: 
     try:
         send(P.MSG_HELLO, P.encode_json({
             "app": P.APP_ID, "v": P.PROTOCOL_VERSION, "version": "test", "name": "FAKE-AGENT",
-            "platform": "win32", "screen": list(size), "warnings": []}))
+            "platform": "win32", "screen": list(size), "warnings": [],
+            "monitors": monitor_list(), "monitor": 1}))
         if flap:        # prova della riconnessione: chiude subito dopo il saluto, come un agente che non riesce a lavorare
             send(P.MSG_NOTICE, P.encode_json({"level": "warning", "text": "test: screen capture failed"}))
             return
@@ -78,7 +89,11 @@ def serve(conn: socket.socket, addr, size: tuple[int, int], fps: int, deadline: 
                 if ev.get("t") != "move":
                     print(f"INPUT {ev}", flush=True)
             elif kind == P.MSG_CONFIG:
-                print(f"CONFIG {P.decode_json(payload)}", flush=True)
+                cfg = P.decode_json(payload)
+                print(f"CONFIG {cfg}", flush=True)
+                if "monitor" in cfg and 1 <= int(cfg["monitor"]) <= monitors:
+                    state["monitor"] = int(cfg["monitor"])
+                    send(P.MSG_MONITORS, P.encode_json({"monitor": state["monitor"], "monitors": monitor_list()}))
     except (OSError, P.ConnectionClosed, P.ProtocolError):
         pass
     finally:
@@ -93,6 +108,7 @@ def main() -> None:
     ap.add_argument("--seconds", type=float, default=300, help="si ferma da solo dopo questo tempo")
     ap.add_argument("--fps", type=int, default=10)
     ap.add_argument("--size", default="1280x800")
+    ap.add_argument("--monitors", type=int, default=1, choices=[1, 2, 3], help="numero di monitor simulati")
     ap.add_argument("--flap", action="store_true", help="chiude ogni connessione subito dopo il saluto")
     args = ap.parse_args()
     size = tuple(int(v) for v in args.size.lower().split("x"))
@@ -108,7 +124,7 @@ def main() -> None:
             conn, addr = srv.accept()
         except socket.timeout:
             continue
-        threading.Thread(target=serve, args=(conn, addr, size, args.fps, deadline, args.flap), daemon=True).start()
+        threading.Thread(target=serve, args=(conn, addr, size, args.fps, deadline, args.flap, args.monitors), daemon=True).start()
 
 
 if __name__ == "__main__":
